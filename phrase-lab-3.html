@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0a0c">
+<title>Phrase Lab</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Space Grotesk',system-ui,sans-serif;background:#0a0a0c;color:#e8e8f0;display:flex;flex-direction:column}
+button,input,textarea,select{font-family:inherit}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:#252535;border-radius:4px}
+
+#topbar{background:#13131a;border-bottom:1px solid #1e1e28;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.logo{font-family:monospace;font-weight:800;font-size:.95rem;background:linear-gradient(135deg,#7c6ef0,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.topstats{display:flex;gap:8px;font-size:.72rem;font-weight:700}
+.ts{padding:4px 10px;border-radius:20px}
+
+#xpbar{background:#13131a;border-bottom:1px solid #1e1e28;padding:8px 18px;flex-shrink:0}
+.xpr{display:flex;justify-content:space-between;font-size:.68rem;margin-bottom:4px}
+.xpt{background:#1e1e28;border-radius:10px;height:4px;overflow:hidden}
+.xpf{height:100%;background:linear-gradient(90deg,#7c6ef0,#c084fc);border-radius:10px;transition:width .5s}
+
+#scroll{flex:1;overflow-y:auto;padding:16px 16px 80px}
+#nav{position:fixed;bottom:0;left:0;right:0;background:#13131a;border-top:1px solid #1e1e28;display:flex;z-index:50}
+.nb{flex:1;padding:10px 4px 9px;background:none;border:none;color:#55556a;font-size:.58rem;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;position:relative}
+.nb .ni{font-size:1.15rem}
+.nb.on{color:#7c6ef0}
+.nbadge{position:absolute;top:5px;left:50%;margin-left:6px;background:#f87171;color:#fff;border-radius:20px;font-size:.5rem;padding:1px 5px;font-weight:800}
+
+.pg{display:none}.pg.on{display:block}
+
+/* REVIEW */
+.rv-card{background:#13131a;border:1.5px solid #1e1e28;border-radius:18px;padding:22px 18px;margin-bottom:14px}
+.rv-tag{display:inline-block;font-size:.65rem;font-weight:700;padding:3px 10px;border-radius:20px;margin-bottom:12px}
+.rv-phrase{font-size:1.6rem;font-weight:800;line-height:1.2;margin-bottom:5px}
+.rv-meta{font-size:.7rem;color:#55556a}
+.rv-sep{height:1px;background:#1e1e28;margin:14px 0}
+.rv-ru{font-size:1rem;color:#c084fc;font-weight:600;margin-bottom:12px}
+.rv-exlbl{font-size:.64rem;font-weight:700;color:#55556a;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+.rv-ex{font-size:.9rem;line-height:1.7;color:#a8a8c0;padding:8px 0;border-bottom:1px solid #1e1e28}
+.rv-ex:last-child{border-bottom:none}
+.rv-ex b{color:#c084fc;font-weight:700}
+
+.show-btn{width:100%;padding:14px;background:linear-gradient(135deg,#7c6ef0,#c084fc);color:#fff;border:none;border-radius:14px;font-size:.95rem;font-weight:700;cursor:pointer}
+.rate-hint{font-size:.64rem;font-weight:700;color:#55556a;text-transform:uppercase;letter-spacing:.8px;text-align:center;margin-bottom:8px}
+.rate-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.rb{padding:10px 4px;border-radius:12px;border:1.5px solid;cursor:pointer;text-align:center;background:transparent}
+.rb-l{font-size:.78rem;font-weight:700}
+.rb-s{font-size:.62rem;margin-top:2px;opacity:.8}
+
+.prog-row{display:flex;justify-content:space-between;font-size:.7rem;color:#55556a;margin-bottom:5px}
+.prog-track{background:#1e1e28;border-radius:10px;height:4px;margin-bottom:16px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,#7c6ef0,#c084fc);border-radius:10px;transition:width .3s}
+
+.state{text-align:center;padding:48px 16px}
+.state-ico{font-size:2.8rem;margin-bottom:12px}
+.state-ttl{font-size:1.1rem;font-weight:700;margin-bottom:8px}
+.state-sub{font-size:.86rem;color:#55556a;line-height:1.7;margin-bottom:22px}
+.pills{display:flex;gap:10px;justify-content:center;margin-bottom:22px;flex-wrap:wrap}
+.pill{background:#13131a;border:1.5px solid #1e1e28;border-radius:14px;padding:12px 18px;text-align:center;min-width:76px}
+.pill-v{font-size:1.35rem;font-weight:700}
+.pill-l{font-size:.67rem;color:#55556a;margin-top:2px}
+.big-btn{padding:12px 30px;background:linear-gradient(135deg,#7c6ef0,#c084fc);color:#fff;border:none;border-radius:14px;font-size:.92rem;font-weight:700;cursor:pointer}
+
+/* BROWSE */
+.br-toprow{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.br-count{font-size:.7rem;color:#55556a;font-weight:600}
+.add-btn{padding:7px 14px;background:#7c6ef0;color:#fff;border:none;border-radius:20px;font-size:.76rem;font-weight:700;cursor:pointer}
+.filters{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px;padding-bottom:2px}
+.filters::-webkit-scrollbar{display:none}
+.ftag{padding:4px 11px;border:1.5px solid #1e1e28;border-radius:20px;background:transparent;color:#55556a;font-size:.7rem;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.ftag.on{border-color:#7c6ef0;color:#7c6ef0;background:rgba(124,110,240,.1)}
+
+.pgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.pchip{background:#13131a;border:1.5px solid #1e1e28;border-radius:14px;padding:13px 12px;cursor:pointer;text-align:left;width:100%;color:#e8e8f0;transition:border-color .15s}
+.pchip.due{border-color:rgba(124,110,240,.45)}
+.pchip.mastered{border-color:rgba(52,211,153,.35)}
+.pchip-en{font-size:.84rem;font-weight:700;margin-bottom:3px;line-height:1.3}
+.pchip-ru{font-size:.7rem;color:#c084fc;margin-bottom:5px;line-height:1.3}
+.pchip-meta{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.pchip-tag{font-size:.6rem;font-weight:700}
+.del-btn{position:absolute;top:-4px;right:-4px;width:18px;height:18px;background:#f87171;border:none;border-radius:50%;color:#fff;font-size:.75rem;cursor:pointer;line-height:18px;text-align:center;font-weight:700}
+
+.back-btn{background:none;border:none;color:#55556a;font-size:.84rem;cursor:pointer;margin-bottom:14px;padding:0;display:flex;align-items:center;gap:4px}
+.det-card{background:#13131a;border:1.5px solid #1e1e28;border-radius:18px;padding:20px 18px;margin-bottom:10px}
+.det-phrase{font-size:1.4rem;font-weight:800;margin-bottom:4px}
+.det-ru{font-size:.98rem;color:#c084fc;font-weight:600;margin-bottom:14px}
+.det-ex{font-size:.9rem;line-height:1.72;color:#a8a8c0;padding:8px 0;border-bottom:1px solid #1e1e28}
+.det-ex:last-child{border-bottom:none}
+.det-ex b{color:#c084fc;font-weight:700}
+.srs-row{background:#13131a;border:1.5px solid #1e1e28;border-radius:12px;padding:11px 15px;font-size:.76rem;color:#55556a;display:flex;gap:16px;flex-wrap:wrap}
+.srs-row b{color:#e8e8f0}
+
+.add-form{background:#13131a;border:1.5px solid rgba(124,110,240,.3);border-radius:16px;padding:16px;margin-bottom:14px}
+.flbl{font-size:.64rem;font-weight:700;color:#55556a;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:4px}
+.finp{width:100%;background:#0a0a0c;border:1.5px solid #1e1e28;border-radius:9px;color:#e8e8f0;font-size:.88rem;padding:9px 12px;outline:none;margin-bottom:9px}
+.finp:focus{border-color:#7c6ef0}
+textarea.finp{resize:vertical;min-height:68px;line-height:1.5}
+select.finp{cursor:pointer}
+select.finp option{background:#13131a}
+.fsave{width:100%;padding:11px;background:linear-gradient(135deg,#7c6ef0,#c084fc);color:#fff;border:none;border-radius:10px;font-size:.88rem;font-weight:700;cursor:pointer}
+.fsave:disabled{background:#1e1e28;color:#55556a;cursor:not-allowed}
+
+/* STATS */
+.sgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px}
+.sbox{background:#13131a;border:1.5px solid #1e1e28;border-radius:14px;padding:14px}
+.sbox-v{font-size:1.4rem;font-weight:700}
+.sbox-l{font-size:.68rem;color:#55556a;margin-top:3px}
+.lvmap{background:#13131a;border:1.5px solid #1e1e28;border-radius:14px;padding:15px;margin-bottom:14px}
+.lvi{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.lvi:last-child{margin-bottom:0}
+.lv-you{font-size:.62rem;background:rgba(124,110,240,.15);color:#7c6ef0;border:1px solid rgba(124,110,240,.3);border-radius:20px;padding:2px 8px;font-weight:700}
+.srs-box{background:rgba(124,110,240,.06);border:1.5px solid rgba(124,110,240,.18);border-radius:14px;padding:14px 16px;font-size:.8rem;color:#55556a;line-height:1.7}
+
+/* CHAT */
+#chatMsgs{display:flex;flex-direction:column;gap:9px;margin-bottom:12px}
+.cm{padding:11px 14px;border-radius:15px;font-size:.87rem;line-height:1.65;max-width:90%}
+.cm.u{background:rgba(124,110,240,.18);border:1.5px solid rgba(124,110,240,.28);align-self:flex-end;color:#e8e8f0}
+.cm.a{background:#13131a;border:1.5px solid #1e1e28;align-self:flex-start;color:#e8e8f0}
+.cm b{color:#c084fc}
+.cm code{background:rgba(124,110,240,.18);padding:1px 5px;border-radius:4px;font-family:monospace;font-size:.82em}
+.typing{background:#13131a;border:1.5px solid #1e1e28;border-radius:15px;padding:12px 15px;align-self:flex-start;display:flex;gap:4px;align-items:center}
+.td{width:6px;height:6px;background:#55556a;border-radius:50%;animation:db 1.2s infinite}
+.td:nth-child(2){animation-delay:.2s}.td:nth-child(3){animation-delay:.4s}
+@keyframes db{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-5px)}}
+.chat-wrap{background:#0a0a0c;padding:10px 0 4px;border-top:1px solid #1e1e28}
+.chat-row{display:flex;gap:8px;align-items:flex-end}
+.chat-ta{flex:1;background:#13131a;border:1.5px solid #1e1e28;border-radius:13px;color:#e8e8f0;font-size:.88rem;padding:10px 12px;outline:none;resize:none;max-height:90px;line-height:1.4}
+.chat-ta:focus{border-color:#7c6ef0}
+.chat-ta::placeholder{color:#55556a}
+.send-btn{width:41px;height:41px;background:linear-gradient(135deg,#7c6ef0,#c084fc);border:none;border-radius:11px;color:#fff;font-size:1rem;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.send-btn:disabled{background:#1e1e28;cursor:not-allowed}
+.chat-hint{font-size:.62rem;color:#55556a;text-align:center;margin-top:5px}
+.chat-empty{text-align:center;padding:28px 14px 16px}
+.quick-list{display:flex;flex-direction:column;gap:6px;margin-top:14px}
+.qi{background:#13131a;border:1.5px solid #1e1e28;border-radius:20px;color:#e8e8f0;font-size:.8rem;padding:9px 15px;cursor:pointer;text-align:left}
+.api-box{background:#13131a;border:1.5px solid #1e1e28;border-radius:13px;padding:13px 15px;margin-bottom:10px}
+.api-row{display:flex;gap:8px;margin-top:5px}
+.api-inp{flex:1;background:#0a0a0c;border:1.5px solid #1e1e28;border-radius:9px;color:#e8e8f0;font-size:.82rem;padding:8px 11px;outline:none}
+.api-inp:focus{border-color:#7c6ef0}
+.api-save{padding:8px 13px;background:#7c6ef0;color:#fff;border:none;border-radius:9px;font-size:.76rem;font-weight:700;cursor:pointer;white-space:nowrap}
+.api-note{font-size:.66rem;color:#55556a;margin-top:6px;line-height:1.5}
+
+@keyframes fadeup{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+<div id="topbar">
+  <div class="logo">phrase&#183;lab</div>
+  <div class="topstats">
+    <span class="ts" id="ts1" style="background:rgba(251,191,36,.1);color:#fbbf24">&#128293; 0</span>
+    <span class="ts" id="ts2" style="background:rgba(248,113,113,.1);color:#f87171">0 due</span>
+    <span class="ts" id="ts3" style="background:rgba(124,110,240,.1);color:#7c6ef0">0 XP</span>
+  </div>
+</div>
+<div id="xpbar">
+  <div class="xpr"><span id="xpLv" style="font-weight:700">&#127807; Rookie</span><span id="xpNx" style="color:#55556a">0 XP</span></div>
+  <div class="xpt"><div class="xpf" id="xpFill" style="width:0%"></div></div>
+</div>
+<div id="scroll">
+
+  <!-- REVIEW -->
+  <div class="pg on" id="pg-review">
+    <div class="state" id="rv-empty" style="display:none">
+      <div class="state-ico">&#127881;</div>
+      <div class="state-ttl">Всё повторено!</div>
+      <div class="state-sub">На сегодня карточек нет.<br>Следующие появятся по расписанию.</div>
+      <div class="pills">
+        <div class="pill"><div class="pill-v" id="p1" style="color:#7c6ef0">0</div><div class="pill-l">Изучено</div></div>
+        <div class="pill"><div class="pill-v" id="p2" style="color:#34d399">0</div><div class="pill-l">Освоено</div></div>
+        <div class="pill"><div class="pill-v" id="p3" style="color:#fbbf24">0</div><div class="pill-l">Стрик дней</div></div>
+      </div>
+      <button class="big-btn" id="goBrowse">+ Добавить фразы</button>
+    </div>
+    <div class="state" id="rv-done" style="display:none">
+      <div class="state-ico" id="doneIco">&#128293;</div>
+      <div class="state-ttl" id="doneTtl">Готово!</div>
+      <div class="state-sub" id="doneSub">80%</div>
+      <div class="pills">
+        <div class="pill"><div class="pill-v" id="dC" style="color:#34d399">0</div><div class="pill-l">Верно</div></div>
+        <div class="pill"><div class="pill-v" id="dW" style="color:#f87171">0</div><div class="pill-l">Ошибок</div></div>
+        <div class="pill"><div class="pill-v" id="dT" style="color:#7c6ef0">0</div><div class="pill-l">Всего</div></div>
+      </div>
+      <button class="big-btn" id="rvAgain">Ещё раз</button>
+    </div>
+    <div id="rv-active" style="display:none">
+      <div class="prog-row"><span id="rvP">1/1</span><span id="rvS" style="color:#55556a"></span></div>
+      <div class="prog-track"><div class="prog-fill" id="rvBar" style="width:0%"></div></div>
+      <div class="rv-card">
+        <div id="rvTag" class="rv-tag"></div>
+        <div id="rvPhrase" class="rv-phrase"></div>
+        <div id="rvMeta" class="rv-meta"></div>
+        <div id="rvAns" style="display:none">
+          <div class="rv-sep"></div>
+          <div id="rvRu" class="rv-ru"></div>
+          <div class="rv-exlbl">Примеры в контексте</div>
+          <div id="rvEx"></div>
+        </div>
+      </div>
+      <div id="rvShowWrap"><button class="show-btn" id="rvShowBtn">Показать перевод</button></div>
+      <div id="rvRateWrap" style="display:none">
+        <div class="rate-hint">Как легко вспомнил?</div>
+        <div class="rate-grid" id="rvRateGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BROWSE -->
+  <div class="pg" id="pg-browse">
+    <div id="br-list">
+      <div class="br-toprow">
+        <span class="br-count" id="brCnt">0 фраз</span>
+        <button class="add-btn" id="brAddBtn">+ Добавить</button>
+      </div>
+      <div id="brForm" class="add-form" style="display:none">
+        <div style="font-size:.7rem;font-weight:700;color:#7c6ef0;margin-bottom:12px;text-transform:uppercase;letter-spacing:.8px">Новая фраза</div>
+        <label class="flbl">Фраза на английском *</label>
+        <input class="finp" id="fEn" type="text" placeholder="e.g. get the ball rolling" autocomplete="off" autocorrect="off" spellcheck="false">
+        <label class="flbl">Перевод на русском *</label>
+        <input class="finp" id="fRu" type="text" placeholder="начать дело / дать старт" autocomplete="off">
+        <label class="flbl">Примеры (через точку, необязательно)</label>
+        <textarea class="finp" id="fEx" placeholder="She got the ball rolling. Let's go!"></textarea>
+        <label class="flbl">Категория</label>
+        <select class="finp" id="fTag">
+          <option>General</option><option>Idiom</option><option>Phrasal verb</option>
+          <option>Connector</option><option>Grammar</option><option>Stative</option>
+          <option>Noun</option><option>Verb</option><option>Adverb</option><option>Phrase</option>
+        </select>
+        <button class="fsave" id="fSave" disabled>Сохранить  +10 XP</button>
+      </div>
+      <div class="filters" id="brFilters"></div>
+      <div class="pgrid" id="brGrid"></div>
+    </div>
+    <div id="br-det" style="display:none">
+      <button class="back-btn" id="brBack">&#8592; Все фразы</button>
+      <div class="det-card" id="detCard"></div>
+      <div class="srs-row" id="detSRS"></div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="pg" id="pg-stats">
+    <div class="sgrid" id="sgrid"></div>
+    <div style="font-size:.8rem;font-weight:700;margin-bottom:10px">Уровни</div>
+    <div class="lvmap" id="lvmap"></div>
+    <div class="srs-box">
+      <b style="color:#7c6ef0">Интервальное повторение</b><br><br>
+      Карточки повторяются через нарастающие интервалы:<br>
+      <b style="color:#e8e8f0">Сегодня &#8594; 1д &#8594; 3д &#8594; 7д &#8594; 14д &#8594; 30д &#8594; 90д</b><br><br>
+      Легко вспомнил — интервал растёт. Не вспомнил — карточка возвращается сегодня.
+    </div>
+  </div>
+
+  <!-- CHAT -->
+  <div class="pg" id="pg-chat">
+    <div id="chatEmpty" class="chat-empty">
+      <div style="font-size:2rem;margin-bottom:8px">&#129302;</div>
+      <div style="font-weight:700;margin-bottom:5px">AI English Tutor</div>
+      <div style="font-size:.82rem;color:#55556a;line-height:1.65">Спрашивай про грамматику, фразы,<br>произношение — отвечу по-русски.</div>
+      <div class="quick-list">
+        <button class="qi" id="q1">В чём разница make и do?</button>
+        <button class="qi" id="q2">Когда ставить артикль the?</button>
+        <button class="qi" id="q3">Present Perfect vs Past Simple</button>
+        <button class="qi" id="q4">Придумай диалог с "you do you"</button>
+      </div>
+    </div>
+    <div id="chatMsgs"></div>
+    <div class="chat-wrap">
+      <div class="api-box" id="apiBox">
+        <div class="flbl">API ключ Anthropic</div>
+        <div class="api-row">
+          <input class="api-inp" id="apiInp" type="password" placeholder="sk-ant-..." autocomplete="off" spellcheck="false">
+          <button class="api-save" id="apiSave">Сохранить</button>
+        </div>
+        <div class="api-note">Получи на console.anthropic.com · Хранится только у тебя в браузере</div>
+      </div>
+      <div class="chat-row">
+        <textarea class="chat-ta" id="chatIn" placeholder="Спроси про английский..." rows="1"></textarea>
+        <button class="send-btn" id="sendBtn" disabled>&#10148;</button>
+      </div>
+      <div class="chat-hint">+3 XP за каждый вопрос</div>
+    </div>
+  </div>
+
+</div>
+<div id="nav">
+  <button class="nb on" id="nb-review"><span class="ni">&#128260;</span>Review<span class="nbadge" id="nbadge" style="display:none"></span></button>
+  <button class="nb" id="nb-browse"><span class="ni">&#128218;</span>Browse</button>
+  <button class="nb" id="nb-stats"><span class="ni">&#128202;</span>Stats</button>
+  <button class="nb" id="nb-chat"><span class="ni">&#129302;</span>Chat</button>
+</div>
+
+<div id="toast" style="position:fixed;top:14px;left:50%;transform:translateX(-50%);background:#7c6ef0;color:#fff;padding:9px 20px;border-radius:40px;font-weight:700;font-size:.82rem;box-shadow:0 6px 24px rgba(124,110,240,.5);white-space:nowrap;z-index:999;display:none"></div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────
+var DB = {};
+DB["Advantage"]              = {ru:"Преимущество",tag:"General",s:["The big advantage of working from home is you can wear sweatpants all day.","One advantage of living close to downtown is you never have to drive anywhere.","Yeah, she definitely has an advantage — she's been doing this for years."]};
+DB["Disadvantage"]           = {ru:"Недостаток / минус",tag:"General",s:["The only disadvantage is the commute, but honestly it's not that bad.","Being the youngest in the group is kind of a disadvantage sometimes.","The main disadvantage of that apartment? No parking whatsoever."]};
+DB["Pros and cons"]          = {ru:"Плюсы и минусы",tag:"General",s:["I've been going back and forth on it — there are real pros and cons either way.","Let's just sit down and talk through the pros and cons before we decide anything.","Every option has its pros and cons, you know what I mean?"]};
+DB["No bother"]              = {ru:"Не проблема / не затруднит",tag:"General",s:["Oh, no bother at all — I was already heading that way anyway!","It's no bother, seriously, just text me when you're ready.","Picking you up? No bother, I've got nothing going on tonight."]};
+DB["Fill out"]               = {ru:"Заполнить (форму)",tag:"Phrasal verb",s:["You're gonna need to fill out this form before they can see you.","Just fill out the thing online and they'll email you the confirmation.","I hate how long it takes to fill out job applications these days."]};
+DB["Cultivate"]              = {ru:"Развивать / культивировать",tag:"Verb",s:["She's really been working to cultivate better habits lately and it's showing.","It takes years to cultivate the kind of network that actually opens doors.","You gotta cultivate those relationships, not just hit people up when you need something."]};
+DB["Compassion"]             = {ru:"Сострадание / сочувствие",tag:"Noun",s:["What that kid needs is compassion, not another lecture.","I feel like people have just lost all compassion for each other lately.","She handled that whole situation with so much compassion — I was genuinely impressed."]};
+DB["Take with a pinch of salt"] = {ru:"Не принимать за чистую монету",tag:"Idiom",s:["I'd take that with a pinch of salt — he exaggerates everything.","You gotta take anything you read on social media with a pinch of salt.","Take it with a pinch of salt, but apparently they're closing the whole branch."]};
+DB["Allow"]                  = {ru:"Разрешать / позволять",tag:"Verb",s:["They don't allow outside food in there, which is super annoying.","Allow yourself to just relax this weekend — you've earned it.","My landlord doesn't allow pets, so that's kind of a dealbreaker."]};
+DB["Throw off-track"]        = {ru:"Выбить из колеи",tag:"Phrasal verb",s:["That whole conversation totally threw me off-track and I forgot what I was saying.","Don't let one bad day throw you off-track — just reset and keep going.","The technical issues threw the whole presentation off-track, which was rough."]};
+DB["Pipe down"]              = {ru:"Заткнуться / утихомириться",tag:"Phrasal verb",s:["Will you guys please pipe down? I'm trying to concentrate over here.","He finally piped down once the movie started, thank god.","She told the kids to pipe down like five times and they just kept going."]};
+DB["Lack of"]                = {ru:"Нехватка / отсутствие",tag:"General",s:["The lack of communication on their end is honestly what killed the whole project.","I think the real issue is just a lack of trust — nothing more complicated than that.","He got fired, not because he wasn't smart, but because of his lack of follow-through."]};
+DB["You do you"]             = {ru:"Делай как считаешь нужным",tag:"Idiom",s:["Look, I'm not gonna tell you what to do — you do you.","If you wanna skip the party, that's totally fine. You do you.","You do you, but I honestly think you should just apologize and move on."]};
+DB["Think (opinion)"]        = {ru:"Думать = мнение",tag:"Stative",s:["I think this is a great idea, honestly.","I don't think we should go out tonight — it's pouring.","She thinks he's really smart, but I'm not so sure."]};
+DB["Thinking (process)"]     = {ru:"Думать = размышлять сейчас",tag:"Stative",s:["I'm thinking about changing jobs — it's been on my mind a lot.","What are you thinking? You've been quiet the whole ride.","I'm thinking we grab pizza tonight, what do you say?"]};
+DB["See (understand)"]       = {ru:"Видеть = понимать",tag:"Stative",s:["I see what you mean — that actually makes a lot of sense.","Oh, I see the problem now. The cable's unplugged.","Do you see why this is such a big deal?"]};
+DB["Seeing (meeting)"]       = {ru:"Встречаться / идти к кому-то",tag:"Stative",s:["I'm seeing a doctor today about my knee — finally.","She's been seeing a therapist for a few months and it's really helping.","He's seeing someone new, I heard. Good for him."]};
+DB["Feel (state)"]           = {ru:"Чувствовать себя (состояние)",tag:"Stative",s:["I feel like total garbage today — think I'm getting sick.","She feels much better after getting some sleep.","I feel like we've been here before, you know what I mean?"]};
+DB["Have (possess)"]         = {ru:"Иметь, владеть (состояние)",tag:"Stative",s:["I have a car, but I barely drive it anymore.","She has a really good eye for design.","We have a reservation for 8 — don't be late."]};
+DB["Having (action)"]        = {ru:"Иметь = действие / процесс",tag:"Stative",s:["I'm having dinner with my family tonight.","We're having the best time — you should've come.","She's having a rough week, so be easy on her."]};
+DB["However"]                = {ru:"Однако / тем не менее",tag:"Connector",s:["I really wanted to go, however I had too much work piling up.","The plan sounds great, however we don't have the budget for it right now.","She's super talented, however she doesn't always show up when it counts."]};
+DB["Ultimately"]             = {ru:"В конечном счёте / в итоге",tag:"Connector",s:["Ultimately, it's your call — I'll support whatever you decide.","We went back and forth on it, but ultimately went with the cheaper option.","Ultimately, what matters most is that you're happy with the outcome."]};
+DB["Survive"]                = {ru:"Выживать / справляться",tag:"Verb",s:["I don't know how she survives on four hours of sleep — honestly impressive.","We survived the worst year of our lives and came out stronger.","How do people survive those long family dinners without losing their minds?"]};
+DB["Shame"]                  = {ru:"Стыд / позор / жалость",tag:"Noun",s:["It's a shame you couldn't make it — the party was actually really fun.","There's no shame in asking for help. That's what people are there for.","He carried so much shame about it for years, but it wasn't even his fault."]};
+DB["Completely"]             = {ru:"Полностью / совершенно",tag:"Adverb",s:["I completely forgot we had plans tonight — I'm so sorry.","She's completely changed since she moved to New York.","That's completely fine, don't even worry about it."]};
+DB["Rely on"]                = {ru:"Полагаться на / зависеть от",tag:"Phrasal verb",s:["You can always rely on her — she never lets people down.","I've been relying on coffee way too much lately.","Don't rely on him to show up on time. It's just not his thing."]};
+DB["Wellbeing"]              = {ru:"Благополучие / самочувствие",tag:"Noun",s:["Taking breaks is actually important for your overall wellbeing.","She's been really focused on her mental wellbeing lately, which is great.","The company says they care about employee wellbeing, but the hours say otherwise."]};
+DB["Manifest"]               = {ru:"Проявляться / выражаться",tag:"Verb",s:["Stress can manifest as headaches, insomnia, all kinds of things.","His anxiety manifests in really unexpected ways — like cleaning obsessively.","That kind of pressure often manifests in burnout down the line."]};
+DB["Inadequacy"]             = {ru:"Чувство неполноценности",tag:"Noun",s:["Social media really triggers feelings of inadequacy, if you let it.","She struggled with a deep sense of inadequacy for most of her twenties.","That constant comparison thing is what drives the inadequacy feeling."]};
+DB["Confidence"]             = {ru:"Уверенность в себе",tag:"Noun",s:["He didn't have the confidence to speak up in the meeting, which was a shame.","Fake it till you make it — that's literally how confidence works sometimes.","Her confidence in the room was impossible to ignore."]};
+DB["Along with"]             = {ru:"Вместе с / наряду с",tag:"Connector",s:["Along with the stress came a total lack of motivation.","She brought snacks along with a really good playlist.","Along with the job offer came a pretty big pay raise."]};
+DB["Such as"]                = {ru:"Например / такие как",tag:"Connector",s:["Hobbies such as painting or running can really help with stress.","There are plenty of options, such as therapy, journaling, or just talking to someone.","Simple habits, such as drinking more water, can make a huge difference."]};
+DB["Anxiety"]                = {ru:"Тревога / тревожность",tag:"Noun",s:["I get a lot of anxiety before big presentations — like my brain won't shut up.","Her anxiety was through the roof the week before the exam.","Talking about it actually helps with anxiety more than people think."]};
+DB["Impact"]                 = {ru:"Влияние / воздействие",tag:"Noun",s:["The impact of negative words on kids is way bigger than parents realize.","That decision had a huge impact on the whole team.","She didn't know how much of an impact she had on people around her."]};
+DB["Interact"]               = {ru:"Взаимодействовать / общаться",tag:"Verb",s:["She finds it really hard to interact with people in large groups.","The way he interacts with clients is genuinely impressive.","Kids learn how to interact with others through play — it's really important."]};
+DB["It can lead to"]         = {ru:"Это может привести к...",tag:"Grammar",s:["Not resting can lead to serious burnout — like really serious.","Poor communication can lead to a lot of unnecessary misunderstandings.","Ignoring your mental health can lead to bigger problems down the road."]};
+DB["Self-doubt"]             = {ru:"Неуверенность / сомнение в себе",tag:"Noun",s:["Self-doubt crept in after the rejection and it took a while to shake.","Everyone deals with self-doubt — even the people who look like they have it all together.","She pushed through the self-doubt and ended up killing it at the presentation."]};
+DB["Go-getter"]              = {ru:"Целеустремлённый человек",tag:"Noun",s:["She's such a go-getter — started her own business before she was 25.","You need a go-getter on the team, someone who doesn't wait to be told what to do.","He's always been a go-getter, even back in school."]};
+DB["Demand"]                 = {ru:"Требовать (от себя или других)",tag:"Verb",s:["He demands too much of himself and never seems satisfied.","She demands excellence from her team, which can be a lot to handle.","Don't demand perfection — it's just not realistic."]};
+DB["Insist"]                 = {ru:"Настаивать",tag:"Verb",s:["She insisted on doing everything herself, which kind of slowed everyone down.","He insists on being early to everything — like 20 minutes early, minimum.","I insisted we talk it out before making any decisions."]};
+DB["Slave over"]             = {ru:"Корпеть / надрываться над чем-то",tag:"Phrasal verb",s:["He slaved over that project all night and barely made a dent.","I slaved over this dinner for two hours — please say it's good.","She was slaving over the report while everyone else was already at happy hour."]};
+DB["Punish yourself"]        = {ru:"Наказывать себя",tag:"Phrase",s:["Stop punishing yourself for every little mistake — you're only human.","She would punish herself mentally for days after making even small errors.","There's no point punishing yourself over something you can't change now."]};
+DB["No longer"]              = {ru:"Больше не / уже не",tag:"Adverb",s:["I no longer let other people's opinions run my life.","She no longer works there — left about six months ago.","I'm no longer interested in drama. I just don't have the energy for it."]};
+
+var IVLS  = [0,1,3,7,14,30,90];
+var LVLS  = [{n:"Rookie",min:0,i:"🌱",c:"#6b6b7f"},{n:"Speaker",min:150,i:"💬",c:"#34d399"},{n:"Fluent",min:400,i:"⚡",c:"#60a5fa"},{n:"Native",min:900,i:"🔥",c:"#fbbf24"},{n:"Legend",min:2000,i:"👑",c:"#c084fc"}];
+var TCLR  = {Stative:"#60a5fa",Idiom:"#fb923c","Phrasal verb":"#c084fc",Connector:"#34d399",Grammar:"#fbbf24",General:"#6b6b7f",Noun:"#94a3b8",Verb:"#67e8f9",Adverb:"#f0abfc",Phrase:"#fb923c"};
+
+// ── STORAGE ───────────────────────────────────────────────────────────────
+function lsg(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}}
+function lss(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+
+var cards  = lsg("pl_cards",{});
+var custom = lsg("pl_cust",{});
+var xp     = lsg("pl_xp",0);
+var streak = lsg("pl_str",0);
+var ldate  = lsg("pl_date","");
+var apiKey = lsg("pl_api","");
+
+function ap(){return Object.assign({},DB,custom);}
+
+// init cards
+var allp=ap();
+Object.keys(allp).forEach(function(k){if(!cards[k])cards[k]={key:k,step:0,next:td(),str:0,seen:0};});
+lss("pl_cards",cards);
+
+// streak
+var tod=td();
+if(ldate!==tod){
+  var yd=addD(tod,-1);
+  streak=(ldate===yd)?streak+1:1;
+  ldate=tod; lss("pl_str",streak); lss("pl_date",ldate);
+}
+
+// ── HELPERS ──────────────────────────────────────────────────────────────
+function td(){var d=new Date();return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
+function pad(n){return String(n).padStart(2,"0");}
+function addD(iso,n){var d=new Date(iso);d.setDate(d.getDate()+n);return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
+function due(c){return !c.next||c.next<=td();}
+function glv(x){var l=LVLS[0];LVLS.forEach(function(v){if(x>=v.min)l=v;});return l;}
+function gnx(x){for(var i=0;i<LVLS.length;i++){if(x<LVLS[i].min)return LVLS[i];}return null;}
+function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+function bold(sentence,key){
+  if(!key)return esc(sentence);
+  var lo=sentence.toLowerCase(),kl=key.toLowerCase(),i=lo.indexOf(kl);
+  if(i<0)return esc(sentence);
+  return esc(sentence.slice(0,i))+"<b>"+esc(sentence.slice(i,i+key.length))+"</b>"+esc(sentence.slice(i+key.length));
+}
+
+var _toastT;
+function toast(msg){
+  clearTimeout(_toastT);
+  var el=document.getElementById("toast");
+  el.textContent=msg;el.style.display="block";
+  _toastT=setTimeout(function(){el.style.display="none";},2000);
+}
+
+function gainXP(n){
+  var ol=glv(xp).n; xp+=n; lss("pl_xp",xp);
+  if(glv(xp).n!==ol)setTimeout(function(){toast("🎉 Level up! "+glv(xp).i+" "+glv(xp).n);},300);
+  updateUI();
+}
+
+function updateUI(){
+  var lv=glv(xp),nx=gnx(xp);
+  var pct=nx?Math.round((xp-lv.min)/(nx.min-lv.min)*100):100;
+  document.getElementById("ts1").textContent="🔥 "+streak;
+  var d=Object.values(cards).filter(due).length;
+  document.getElementById("ts2").textContent=d+" due";
+  document.getElementById("ts3").textContent=xp+" XP";
+  document.getElementById("ts3").style.color=lv.c;
+  document.getElementById("xpLv").textContent=lv.i+" "+lv.n;
+  document.getElementById("xpLv").style.color=lv.c;
+  document.getElementById("xpNx").textContent=nx?xp+"/"+nx.min+" XP":"MAX";
+  document.getElementById("xpFill").style.width=pct+"%";
+  var b=document.getElementById("nbadge");
+  if(d>0){b.textContent=d;b.style.display="block";}else{b.style.display="none";}
+}
+
+// ── TABS ─────────────────────────────────────────────────────────────────
+var curTab="review";
+function goTab(name){
+  curTab=name;
+  ["review","browse","stats","chat"].forEach(function(t){
+    document.getElementById("pg-"+t).classList.toggle("on",t===name);
+    document.getElementById("nb-"+t).classList.toggle("on",t===name);
+  });
+  if(name==="browse")rBrowse();
+  if(name==="stats")rStats();
+  if(name==="review")startRv();
+}
+
+document.getElementById("nb-review").addEventListener("click",function(){goTab("review");});
+document.getElementById("nb-browse").addEventListener("click",function(){goTab("browse");});
+document.getElementById("nb-stats").addEventListener("click",function(){goTab("stats");});
+document.getElementById("nb-chat").addEventListener("click",function(){goTab("chat");});
+document.getElementById("goBrowse").addEventListener("click",function(){goTab("browse");});
+document.getElementById("rvAgain").addEventListener("click",function(){startRv();});
+
+// ── REVIEW ───────────────────────────────────────────────────────────────
+var rvQ=[],rvI=0,rvC=0,rvT=0,rvDone=false;
+
+function startRv(){
+  allp=ap();
+  var d=Object.values(cards).filter(function(c){return due(c)&&allp[c.key];}).map(function(c){return c.key;});
+  rvQ=d.sort(function(){return Math.random()-.5;});
+  rvI=0;rvC=0;rvT=0;rvDone=false;
+  document.getElementById("p1").textContent=Object.values(cards).filter(function(c){return c.seen>0;}).length;
+  document.getElementById("p2").textContent=Object.values(cards).filter(function(c){return c.step>=5;}).length;
+  document.getElementById("p3").textContent=streak;
+  if(!rvQ.length){rvShow("empty");return;}
+  rvShow("active");
+  rvCard();
+}
+
+function rvShow(s){
+  document.getElementById("rv-empty").style.display=s==="empty"?"block":"none";
+  document.getElementById("rv-done").style.display=s==="done"?"block":"none";
+  document.getElementById("rv-active").style.display=s==="active"?"block":"none";
+}
+
+function rvCard(){
+  rvDone=false;
+  var key=rvQ[rvI],p=allp[key],c=cards[key];
+  var pct=Math.round(rvI/rvQ.length*100);
+  document.getElementById("rvBar").style.width=pct+"%";
+  document.getElementById("rvP").textContent=(rvI+1)+"/"+rvQ.length;
+  document.getElementById("rvS").textContent="✓"+rvC+" ✗"+(rvT-rvC);
+  var tc=TCLR[p.tag]||"#6b6b7f";
+  var tg=document.getElementById("rvTag");
+  tg.textContent=p.tag||"General";tg.style.color=tc;tg.style.background=tc+"18";
+  document.getElementById("rvPhrase").textContent=key;
+  document.getElementById("rvMeta").textContent=c.seen>0?"Повторений: "+c.seen+" · Интервал: "+IVLS[c.step]+"д":"Первый раз";
+  document.getElementById("rvAns").style.display="none";
+  document.getElementById("rvShowWrap").style.display="block";
+  document.getElementById("rvRateWrap").style.display="none";
+}
+
+document.getElementById("rvShowBtn").addEventListener("click",function(){
+  var key=rvQ[rvI],p=allp[key];
+  document.getElementById("rvRu").textContent=p.ru;
+  var ex=document.getElementById("rvEx");
+  ex.innerHTML="";
+  (p.s||[]).forEach(function(s){
+    var d=document.createElement("div");
+    d.className="rv-ex";d.innerHTML=bold(s,key);ex.appendChild(d);
+  });
+  document.getElementById("rvAns").style.display="block";
+  document.getElementById("rvShowWrap").style.display="none";
+  document.getElementById("rvRateWrap").style.display="block";
+});
+
+// Build rate buttons
+(function(){
+  var cfg=[
+    {q:0,l:"Again",s:"Не помнил",c:"#f87171"},
+    {q:1,l:"Hard",s:"С трудом",c:"#fb923c"},
+    {q:2,l:"Good",s:"Вспомнил",c:"#60a5fa"},
+    {q:3,l:"Easy",s:"Легко!",c:"#34d399"}
+  ];
+  var g=document.getElementById("rvRateGrid");
+  cfg.forEach(function(b){
+    var btn=document.createElement("button");
+    btn.className="rb";
+    btn.style.borderColor=b.c+"55";btn.style.color=b.c;btn.style.background=b.c+"0f";
+    btn.innerHTML='<div class="rb-l">'+b.l+'</div><div class="rb-s" style="color:'+b.c+'">'+b.s+'</div>';
+    btn.addEventListener("click",function(){doRate(b.q);});
+    g.appendChild(btn);
+  });
+})();
+
+function doRate(q){
+  if(rvDone)return;rvDone=true;
+  var key=rvQ[rvI],c=cards[key];
+  var ns=q===0?0:q===1?Math.max(0,c.step-1):Math.min(c.step+1,IVLS.length-1);
+  var iv=IVLS[ns];
+  cards[key]={key:key,step:ns,next:iv===0?td():addD(td(),iv),str:q>=2?c.str+1:0,seen:c.seen+1};
+  lss("pl_cards",cards);
+  var ok=q>=2;if(ok)rvC++;rvT++;
+  gainXP(ok?10:2);toast(ok?"+10 XP ✓":"+2 XP");
+  setTimeout(function(){
+    rvI++;
+    if(rvI>=rvQ.length)endRv();else rvCard();
+  },260);
+}
+
+function endRv(){
+  var pct=rvT?Math.round(rvC/rvT*100):0;
+  document.getElementById("doneIco").textContent=pct>=80?"🔥":pct>=50?"💪":"📚";
+  document.getElementById("doneTtl").textContent=pct>=80?"Отлично!":pct>=50?"Хороший результат!":"Продолжай!";
+  document.getElementById("doneSub").textContent=pct+"% правильных";
+  document.getElementById("dC").textContent=rvC;
+  document.getElementById("dW").textContent=rvT-rvC;
+  document.getElementById("dT").textContent=rvT;
+  rvShow("done");
+}
+
+// ── BROWSE ───────────────────────────────────────────────────────────────
+var brFilter="All",brDet=null,brAddOpen=false;
+
+document.getElementById("brAddBtn").addEventListener("click",function(){
+  brAddOpen=!brAddOpen;
+  document.getElementById("brForm").style.display=brAddOpen?"block":"none";
+  document.getElementById("brAddBtn").textContent=brAddOpen?"✕ Закрыть":"+ Добавить";
+  if(brAddOpen)setTimeout(function(){document.getElementById("fEn").focus();},80);
+});
+
+document.getElementById("fEn").addEventListener("input",chkForm);
+document.getElementById("fRu").addEventListener("input",chkForm);
+function chkForm(){
+  var ok=document.getElementById("fEn").value.trim()&&document.getElementById("fRu").value.trim();
+  document.getElementById("fSave").disabled=!ok;
+}
+
+document.getElementById("fSave").addEventListener("click",function(){
+  var en=document.getElementById("fEn").value.trim();
+  var ru=document.getElementById("fRu").value.trim();
+  if(!en||!ru)return;
+  var exRaw=document.getElementById("fEx").value.trim();
+  var sents=exRaw?exRaw.split(/\.+\s+/).map(function(x){return x.trim().replace(/\.$/,"")+"."}).filter(function(x){return x.length>2;}):['"'+en+'" is a great phrase to use.'];
+  var tag=document.getElementById("fTag").value;
+  custom[en]={ru:ru,tag:tag,s:sents,custom:true};
+  lss("pl_cust",custom);
+  if(!cards[en])cards[en]={key:en,step:0,next:td(),str:0,seen:0};
+  lss("pl_cards",cards);
+  gainXP(10);toast("+10 XP — добавлена!");
+  document.getElementById("fEn").value="";
+  document.getElementById("fRu").value="";
+  document.getElementById("fEx").value="";
+  document.getElementById("fSave").disabled=true;
+  brAddOpen=false;
+  document.getElementById("brForm").style.display="none";
+  document.getElementById("brAddBtn").textContent="+ Добавить";
+  allp=ap();rBrowse();updateUI();
+});
+
+document.getElementById("brBack").addEventListener("click",function(){
+  brDet=null;
+  document.getElementById("br-list").style.display="block";
+  document.getElementById("br-det").style.display="none";
+});
+
+function rBrowse(){
+  allp=ap();
+  if(brDet){openDet(brDet);return;}
+  document.getElementById("br-list").style.display="block";
+  document.getElementById("br-det").style.display="none";
+  var keys=Object.keys(allp);
+  document.getElementById("brCnt").textContent=keys.length+" фраз";
+
+  // filters
+  var tags=["All"];
+  keys.forEach(function(k){var t=allp[k].tag||"General";if(tags.indexOf(t)<0)tags.push(t);});
+  var fEl=document.getElementById("brFilters");fEl.innerHTML="";
+  tags.forEach(function(t){
+    var btn=document.createElement("button");
+    btn.className="ftag"+(brFilter===t?" on":"");
+    btn.textContent=t;
+    btn.addEventListener("click",function(){brFilter=t;rBrowse();});
+    fEl.appendChild(btn);
+  });
+
+  // grid
+  var filtered=keys.filter(function(k){return brFilter==="All"||(allp[k].tag||"General")===brFilter;});
+  var grid=document.getElementById("brGrid");grid.innerHTML="";
+  if(!filtered.length){
+    grid.innerHTML='<div style="color:#55556a;font-size:.84rem;padding:16px 0">Нет фраз в этой категории.</div>';
+    return;
+  }
+  filtered.forEach(function(k){
+    var p=allp[k],c=cards[k]||{step:0,seen:0,str:0,next:td()};
+    var mastered=c.step>=5,isDue=due(c);
+    var tc=TCLR[p.tag]||"#6b6b7f";
+    var wrap=document.createElement("div");
+    wrap.style.position="relative";
+
+    var btn=document.createElement("button");
+    btn.className="pchip"+(mastered?" mastered":isDue?" due":"");
+
+    var enDiv=document.createElement("div");
+    enDiv.className="pchip-en";enDiv.textContent=k;
+    if(p.custom){var my=document.createElement("span");my.style.cssText="font-size:.52rem;color:#fbbf24;margin-left:4px";my.textContent="MY";enDiv.appendChild(my);}
+
+    var ruDiv=document.createElement("div");ruDiv.className="pchip-ru";ruDiv.textContent=p.ru;
+
+    var metaDiv=document.createElement("div");metaDiv.className="pchip-meta";
+    var tagSp=document.createElement("span");tagSp.className="pchip-tag";tagSp.style.color=tc;tagSp.textContent=p.tag||"General";
+    metaDiv.appendChild(tagSp);
+    if(mastered){var ms=document.createElement("span");ms.style.cssText="font-size:.6rem;font-weight:700;color:#34d399";ms.textContent="✓";metaDiv.appendChild(ms);}
+    else if(isDue){var ds=document.createElement("span");ds.style.cssText="font-size:.6rem;font-weight:700;color:#7c6ef0";ds.textContent="due";metaDiv.appendChild(ds);}
+
+    btn.appendChild(enDiv);btn.appendChild(ruDiv);btn.appendChild(metaDiv);
+    (function(key){btn.addEventListener("click",function(){openDet(key);});})(k);
+    wrap.appendChild(btn);
+
+    if(p.custom){
+      var del=document.createElement("button");
+      del.className="del-btn";del.textContent="×";
+      (function(key){del.addEventListener("click",function(e){
+        e.stopPropagation();
+        if(!confirm("Удалить фразу?"))return;
+        delete custom[key];lss("pl_cust",custom);
+        delete cards[key];lss("pl_cards",cards);
+        if(brDet===key)brDet=null;
+        allp=ap();rBrowse();updateUI();
+      });})(k);
+      wrap.appendChild(del);
+    }
+    grid.appendChild(wrap);
+  });
+}
+
+function openDet(key){
+  brDet=key;
+  allp=ap();
+  var p=allp[key],c=cards[key]||{step:0,seen:0,str:0};
+  document.getElementById("br-list").style.display="none";
+  document.getElementById("br-det").style.display="block";
+  var tc=TCLR[p.tag]||"#6b6b7f";
+  var card=document.getElementById("detCard");card.innerHTML="";
+
+  var tagEl=document.createElement("div");tagEl.className="rv-tag";
+  tagEl.textContent=p.tag||"General";tagEl.style.color=tc;tagEl.style.background=tc+"18";
+  card.appendChild(tagEl);
+
+  var ph=document.createElement("div");ph.className="det-phrase";ph.textContent=key;card.appendChild(ph);
+  var ru=document.createElement("div");ru.className="det-ru";ru.textContent=p.ru;card.appendChild(ru);
+
+  var lbl=document.createElement("div");lbl.className="rv-exlbl";lbl.style.marginTop="0";lbl.textContent="Примеры в контексте";card.appendChild(lbl);
+  (p.s||[]).forEach(function(s){
+    var d=document.createElement("div");d.className="det-ex";d.innerHTML=bold(s,key);card.appendChild(d);
+  });
+
+  document.getElementById("detSRS").innerHTML=
+    "<span>Просмотров: <b>"+c.seen+"</b></span>"+
+    "<span>Интервал: <b>"+IVLS[c.step]+"д</b></span>"+
+    "<span>Стрик: <b style='color:#fbbf24'>"+c.str+"🔥</b></span>";
+}
+
+// ── STATS ─────────────────────────────────────────────────────────────────
+function rStats(){
+  allp=ap();
+  var total=Object.keys(allp).length;
+  var learned=Object.values(cards).filter(function(c){return c.seen>0;}).length;
+  var mastered=Object.values(cards).filter(function(c){return c.step>=5;}).length;
+  var d=Object.values(cards).filter(due).length;
+  var lv=glv(xp);
+  var items=[
+    {l:"Total XP",v:xp,c:lv.c},
+    {l:"Стрик 🔥",v:streak+"д",c:"#fbbf24"},
+    {l:"К повторению",v:d,c:"#f87171"},
+    {l:"Освоено",v:mastered,c:"#34d399"},
+    {l:"Изучено",v:learned,c:"#60a5fa"},
+    {l:"Всего фраз",v:total,c:"#c084fc"}
+  ];
+  var sg=document.getElementById("sgrid");sg.innerHTML="";
+  items.forEach(function(x){
+    var b=document.createElement("div");b.className="sbox";
+    b.innerHTML='<div class="sbox-v" style="color:'+x.c+'">'+x.v+'</div><div class="sbox-l">'+x.l+'</div>';
+    sg.appendChild(b);
+  });
+  var lm=document.getElementById("lvmap");lm.innerHTML="";
+  LVLS.forEach(function(lv2){
+    var active=xp>=lv2.min,cur=glv(xp).n===lv2.n;
+    var row=document.createElement("div");row.className="lvi";row.style.opacity=active?"1":"0.3";
+    row.innerHTML='<span style="font-size:1.05rem">'+lv2.i+'</span>'+
+      '<div style="flex:1"><div style="font-size:.8rem;font-weight:'+(cur?700:500)+';color:'+(active?lv2.c:"#6b6b7f")+'">'+lv2.n+'</div>'+
+      '<div style="font-size:.66rem;color:#55556a">'+lv2.min+' XP</div></div>'+
+      (cur?'<span class="lv-you">ТЫ ЗДЕСЬ</span>':"")+(active&&!cur?'<span style="color:#34d399">✓</span>':"");
+    lm.appendChild(row);
+  });
+}
+
+// ── CHAT ─────────────────────────────────────────────────────────────────
+var chatHist=[],chatBusy=false;
+
+if(apiKey){
+  document.getElementById("apiInp").value=apiKey;
+  document.getElementById("apiBox").style.display="none";
+  document.getElementById("sendBtn").disabled=false;
+}
+
+document.getElementById("apiSave").addEventListener("click",function(){
+  var k=document.getElementById("apiInp").value.trim();
+  if(!k){toast("Введи API ключ");return;}
+  apiKey=k;lss("pl_api",k);
+  document.getElementById("apiBox").style.display="none";
+  document.getElementById("sendBtn").disabled=false;
+  toast("API ключ сохранён ✓");
+});
+
+["q1","q2","q3","q4"].forEach(function(id){
+  document.getElementById(id).addEventListener("click",function(){
+    document.getElementById("chatIn").value=document.getElementById(id).textContent;
+    doSend();
+  });
+});
+
+var chatTa=document.getElementById("chatIn");
+chatTa.addEventListener("input",function(){
+  chatTa.style.height="auto";
+  chatTa.style.height=Math.min(chatTa.scrollHeight,90)+"px";
+});
+chatTa.addEventListener("keydown",function(e){
+  if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();doSend();}
+});
+document.getElementById("sendBtn").addEventListener("click",doSend);
+
+function addMsg(role,html){
+  document.getElementById("chatEmpty").style.display="none";
+  var d=document.createElement("div");
+  d.className="cm "+(role==="user"?"u":"a");
+  d.innerHTML=html;
+  document.getElementById("chatMsgs").appendChild(d);
+  document.getElementById("scroll").scrollTop=99999;
+  return d;
+}
+
+function showTyping(){
+  var d=document.createElement("div");d.className="typing";d.id="typingEl";
+  d.innerHTML='<div class="td"></div><div class="td"></div><div class="td"></div>';
+  document.getElementById("chatMsgs").appendChild(d);
+  document.getElementById("scroll").scrollTop=99999;
+}
+function hideTyping(){var el=document.getElementById("typingEl");if(el)el.remove();}
+
+function fmtAI(t){
+  return t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/\*\*(.+?)\*\*/g,"<b>$1</b>")
+    .replace(/`(.+?)`/g,"<code>$1</code>")
+    .replace(/\n/g,"<br>");
+}
+
+async function doSend(){
+  if(chatBusy||!apiKey)return;
+  var txt=chatTa.value.trim();if(!txt)return;
+  chatTa.value="";chatTa.style.height="auto";
+  addMsg("user",esc(txt));
+  chatHist.push({role:"user",content:txt});
+  chatBusy=true;document.getElementById("sendBtn").disabled=true;
+  showTyping();
+  var sys="You are a friendly American English tutor for a Russian speaker. When the user writes in Russian, respond in Russian. Be concise and practical. Show 2-3 natural American examples when explaining phrases. Use **bold** for key terms.";
+  try{
+    var res=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01"},
+      body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:600,system:sys,messages:chatHist})
+    });
+    var data=await res.json();
+    if(data.error)throw new Error(data.error.message);
+    var reply=(data.content||[]).filter(function(b){return b.type==="text";}).map(function(b){return b.text;}).join("");
+    hideTyping();addMsg("a",fmtAI(reply));
+    chatHist.push({role:"assistant",content:reply});
+    if(chatHist.length>20)chatHist=chatHist.slice(-20);
+    gainXP(3);
+  }catch(e){
+    hideTyping();addMsg("a","<span style='color:#f87171'>Ошибка: "+esc(String(e))+"</span>");
+  }
+  chatBusy=false;document.getElementById("sendBtn").disabled=false;
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────
+updateUI();
+startRv();
+</script>
+</body>
+</html>
