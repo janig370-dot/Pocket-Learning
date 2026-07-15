@@ -332,10 +332,12 @@ select.finp option{background:#13131a}
         <button class="ltab on" id="lt-lessons" onclick="lTab('lessons')">&#128218; Уроки</button>
         <button class="ltab" id="lt-topics" onclick="lTab('topics')">&#128172; Топики</button>
         <button class="ltab" id="lt-tasks" onclick="lTab('tasks')">&#9999;&#65039; Задания</button>
+        <button class="ltab" id="lt-lod" onclick="lTab('lod')">&#127774; День</button>
       </div>
       <div id="ls-lessons"></div>
       <div id="ls-topics" style="display:none"></div>
       <div id="ls-tasks" style="display:none"></div>
+      <div id="ls-lod" style="display:none"></div>
     </div>
     <div id="ldetail" style="display:none">
       <button class="back-btn" id="lBack">&#8592; Назад</button>
@@ -575,20 +577,65 @@ function rvCard(){
 
 document.getElementById("rvShowBtn").addEventListener("click",function(){
   var key=rvQ[rvI],p=allp[key];
-  document.getElementById("rvRu").textContent=p.ru;
+  // show translation with speak button
+  var ruEl=document.getElementById("rvRu");
+  ruEl.innerHTML="";
+  var ruTxt=document.createElement("span");ruTxt.textContent=p.ru;
+  var ruSpk=document.createElement("button");ruSpk.innerHTML="&#128266;";
+  ruSpk.style.cssText="background:none;border:1.5px solid #2a2a38;border-radius:20px;color:#55556a;font-size:.82rem;padding:3px 10px;cursor:pointer;margin-left:10px;vertical-align:middle";
+  ruSpk.title="Произнести фразу";
+  ruSpk.addEventListener("click",function(){speak(key);});
+  ruEl.appendChild(ruTxt);ruEl.appendChild(ruSpk);
+
   var ex=document.getElementById("rvEx");
   ex.innerHTML="";
-  var hint=document.createElement("div");hint.style.cssText="font-size:.66rem;color:#55556a;margin-bottom:6px";hint.textContent="+ = добавить слово в изучение";ex.appendChild(hint);
-  (p.s||[]).forEach(function(s){
-    var d=document.createElement("div");d.className="rv-ex";d.style.cssText="display:flex;align-items:flex-start;gap:6px";
-    var spk=document.createElement("button");spk.innerHTML="&#128266;";spk.style.cssText="background:none;border:none;color:#55556a;font-size:.8rem;cursor:pointer;flex-shrink:0;padding:0;margin-top:2px";
+  var hint=document.createElement("div");hint.style.cssText="font-size:.66rem;color:#55556a;margin-bottom:6px";
+  hint.textContent="+ = добавить слово в изучение";
+  ex.appendChild(hint);
+  (p.s||[]).forEach(function(s,si){
+    var d=document.createElement("div");d.className="rv-ex";
+    d.style.cssText="display:flex;flex-direction:column;gap:4px;padding:10px 0;border-bottom:1px solid #1e1e28";
+    // top row: speak + sentence + add btn
+    var topRow=document.createElement("div");
+    topRow.style.cssText="display:flex;align-items:flex-start;gap:6px";
+    var spk=document.createElement("button");spk.innerHTML="&#128266;";
+    spk.style.cssText="background:none;border:none;color:#55556a;font-size:.8rem;cursor:pointer;flex-shrink:0;padding:0;margin-top:2px";
     (function(t){spk.addEventListener("click",function(e){e.stopPropagation();speak(t);});})(s);
     var txt=document.createElement("span");txt.innerHTML=bold(s,key);txt.style.cssText="flex:1;line-height:1.7";
-    var ab=document.createElement("button");ab.textContent="+";ab.style.cssText="background:none;border:1px solid #2a2a38;border-radius:20px;color:#55556a;font-size:.68rem;padding:2px 6px;cursor:pointer;flex-shrink:0;margin-top:2px";
-    (function(sent){ab.addEventListener("click",function(e){e.stopPropagation();var w=window.prompt("Какое слово добавить?\n\n"+sent,"");if(!w||!w.trim())return;w=w.trim();if(DB[w]||custom[w]){toast("Уже есть: "+w);return;}custom[w]={ru:"",tag:"New word",s:[sent],custom:true};cards[w]={key:w,step:0,next:td(),str:0,seen:0};lss("pl_cust",custom);lss("pl_cards",cards);gainXP(2);toast("+2 XP: add translation in Browse!");});})(s);
-    d.appendChild(spk);d.appendChild(txt);d.appendChild(ab);ex.appendChild(d);
+    var ab=document.createElement("button");ab.textContent="+";
+    ab.style.cssText="background:none;border:1px solid #2a2a38;border-radius:20px;color:#55556a;font-size:.68rem;padding:2px 6px;cursor:pointer;flex-shrink:0;margin-top:2px";
+    (function(sent){ab.addEventListener("click",function(e){
+      e.stopPropagation();
+      var w=window.prompt("Какое слово добавить?\n\n"+sent,"");
+      if(!w||!w.trim())return;
+      w=w.trim();
+      if(DB[w]||custom[w]){toast("Уже есть: "+w);return;}
+      custom[w]={ru:"",tag:"New word",s:[sent],custom:true};
+      cards[w]={key:w,step:0,next:td(),str:0,seen:0};
+      lss("pl_cust",custom);lss("pl_cards",cards);syncSave();
+      gainXP(2);toast("+2 XP: \""+w+"\" добавлено! Переведи в Browse.");
+    });})(s);
+    topRow.appendChild(spk);topRow.appendChild(txt);topRow.appendChild(ab);
+    d.appendChild(topRow);
+    // translation row - fetch via AI or show loading
+    var trRow=document.createElement("div");
+    trRow.style.cssText="font-size:.76rem;color:#6b6b7f;font-style:italic;padding-left:22px;min-height:16px";
+    trRow.textContent="...";
+    d.appendChild(trRow);
+    ex.appendChild(d);
+    // fetch translation
+    (function(sentence, trEl){
+      if(!apiKey){trEl.textContent="";return;}
+      fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({messages:[{role:"user",content:"Translate to Russian in 1 short sentence: \""+sentence+"\""}],
+          system:"Translate English to Russian. Reply with translation only, no quotes, no explanation.",apiKey:apiKey})
+      }).then(function(r){return r.json();}).then(function(data){
+        var t=(data.content||[]).filter(function(b){return b.type==="text";}).map(function(b){return b.text;}).join("").trim();
+        trEl.textContent=t||"";
+      }).catch(function(){trEl.textContent="";});
+    })(s, trRow);
   });
-  document.getElementById("rvAns").style.display="block";
+document.getElementById("rvAns").style.display="block";
   document.getElementById("rvShowWrap").style.display="none";
   document.getElementById("rvRateWrap").style.display="block";
 });
@@ -1002,9 +1049,9 @@ document.getElementById("lBack").addEventListener("click",function(){
 var curLTab="lessons";
 function lTab(t){
   curLTab=t;
-  ["lessons","topics","tasks"].forEach(function(x){
-    document.getElementById("ls-"+x).style.display=x===t?"block":"none";
-    document.getElementById("lt-"+x).classList.toggle("on",x===t);
+  ["lessons","topics","tasks","lod"].forEach(function(x){
+    var el=document.getElementById("ls-"+x);if(el)el.style.display=x===t?"block":"none";
+    var tb=document.getElementById("lt-"+x);if(tb)tb.classList.toggle("on",x===t);
   });
 }
 
@@ -1033,6 +1080,116 @@ function renderLearn(){
     (function(task){d.addEventListener("click",function(){openTask(task);});})(t);
     tk.appendChild(d);
   });
+
+  // LESSON OF THE DAY
+  var lodEl=document.getElementById("ls-lod");
+  if(lodEl){
+    lodEl.innerHTML="";
+    var todayKey=new Date().toDateString();
+    var seed=todayKey.split("").reduce(function(a,c){return a+c.charCodeAt(0);},0);
+    function seededRand(max){seed=(seed*1664525+1013904223)&0xffffffff;return Math.abs(seed)%max;}
+    // pick random phrase
+    var allKeys2=Object.keys(ap());
+    var phraseKey=allKeys2[seededRand(allKeys2.length)];
+    var phrase=ap()[phraseKey];
+    // pick random lesson
+    var lesson=LESSONS[seededRand(LESSONS.length)];
+    // pick random topic
+    var topic=TOPICS[seededRand(TOPICS.length)];
+    // build LOD
+    var lodHeader=document.createElement("div");
+    lodHeader.style.cssText="background:linear-gradient(135deg,rgba(124,110,240,.15),rgba(192,132,252,.1));border:1.5px solid rgba(124,110,240,.25);border-radius:16px;padding:16px;margin-bottom:16px";
+    lodHeader.innerHTML='<div style="font-size:.68rem;font-weight:700;color:#7c6ef0;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">&#127774; Урок дня — '+new Date().toLocaleDateString("ru",{weekday:"long",day:"numeric",month:"long"})+'</div>'
+      +'<div style="font-size:.82rem;color:#c8c8d8;line-height:1.6">Сегодня: фраза дня, мини-урок и топик. Выполни всё — получи бонус XP!</div>';
+    lodEl.appendChild(lodHeader);
+
+    // 1. PHRASE OF THE DAY
+    var pod=document.createElement("div");
+    pod.innerHTML='<div class="secttitle" style="margin-bottom:8px">&#127381; Фраза дня</div>';
+    var podCard=document.createElement("div");
+    podCard.style.cssText="background:#13131a;border:1.5px solid #1e1e28;border-radius:14px;padding:16px;margin-bottom:14px";
+    podCard.innerHTML='<div style="font-size:1.2rem;font-weight:800;margin-bottom:4px">'+esc(phraseKey)+'</div>'
+      +'<div style="font-size:.9rem;color:#c084fc;font-weight:600;margin-bottom:10px">'+esc(phrase.ru||"")+'</div>';
+    if(phrase.s&&phrase.s[0]){
+      var exDiv=document.createElement("div");
+      exDiv.style.cssText="font-size:.85rem;color:#a8a8c0;font-style:italic;border-top:1px solid #1e1e28;padding-top:10px";
+      exDiv.textContent=phrase.s[0];
+      podCard.appendChild(exDiv);
+    }
+    var podSpk=document.createElement("button");podSpk.innerHTML="&#128266; Произнести";
+    podSpk.style.cssText="margin-top:10px;background:none;border:1.5px solid #2a2a38;border-radius:20px;color:#55556a;font-size:.76rem;padding:5px 13px;cursor:pointer";
+    (function(k){podSpk.addEventListener("click",function(){speak(k);});})(phraseKey);
+    podCard.appendChild(podSpk);
+    pod.appendChild(podCard);
+    lodEl.appendChild(pod);
+
+    // 2. QUICK QUIZ from lesson
+    var qqDiv=document.createElement("div");
+    qqDiv.innerHTML='<div class="secttitle" style="margin-bottom:8px">&#9889; Быстрый квиз: '+esc(lesson.title)+'</div>';
+    var lodXP=0, lodDone=0, lodTotal=3;
+    var finLodBtn=document.createElement("button");
+    finLodBtn.style.cssText="width:100%;padding:13px;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#111;border:none;border-radius:14px;font-size:.92rem;font-weight:700;cursor:pointer;margin-top:14px;display:none";
+    finLodBtn.textContent="\u2605 Урок дня завершён!";
+    finLodBtn.addEventListener("click",function(){
+      gainXP(lodXP+20); // bonus 20 XP for completing LOD
+      toast("\u2B50 +"+( lodXP+20)+" XP — бонус за урок дня!");
+      finLodBtn.style.display="none";
+      finLodBtn.insertAdjacentHTML("afterend",'<div style="text-align:center;padding:16px;color:#fbbf24;font-weight:700;font-size:.9rem">&#127881; Выполнено! Возвращайся завтра.</div>');
+    });
+    function lodCheck(){lodDone++;if(lodDone>=lodTotal)finLodBtn.style.display="block";}
+    // pick 2 quiz questions
+    var qPicked=lesson.quiz.slice(0,2);
+    qPicked.forEach(function(q){
+      var box=document.createElement("div");box.className="qbox";box.style.marginBottom="10px";
+      var qq=document.createElement("div");qq.className="qquestion";qq.textContent=q.q;box.appendChild(qq);
+      var qAnswered=false;
+      q.opts.forEach(function(opt,oi){
+        var btn=document.createElement("button");btn.className="qopt";btn.textContent=opt;
+        var isOk=oi===q.c;
+        (function(b,ok){b.addEventListener("click",function(){
+          if(qAnswered)return;qAnswered=true;
+          box.querySelectorAll(".qopt").forEach(function(x){x.disabled=true;});
+          b.classList.add(ok?"ok":"no");
+          if(!ok)box.querySelectorAll(".qopt")[q.c].classList.add("ok");
+          if(ok){lodXP+=5;toast("+5 XP \u2713");}
+          lodCheck();
+        });})(btn,isOk);
+        box.appendChild(btn);
+      });
+      qqDiv.appendChild(box);
+    });
+    lodEl.appendChild(qqDiv);
+
+    // 3. PHRASE TASK - translate 1 phrase from topic
+    var tphrase=topic.phrases[seededRand(topic.phrases.length)];
+    var tDiv=document.createElement("div");
+    tDiv.innerHTML='<div class="secttitle" style="margin-bottom:8px">&#128172; Переведи фразу ('+esc(topic.title)+')</div>';
+    var tbox=document.createElement("div");tbox.className="qbox";
+    var tq=document.createElement("div");tq.className="qquestion";tq.textContent=tphrase.ru;tbox.appendChild(tq);
+    var tinp=document.createElement("input");tinp.className="tinp";tinp.placeholder="Напиши по-английски...";
+    var tcb=document.createElement("button");tcb.className="tchk";tcb.textContent="Проверить";
+    var tfb=document.createElement("div");tfb.style.marginTop="8px";
+    var tAnswered=false;
+    (function(inp,correct,fb,checkbtn){
+      checkbtn.addEventListener("click",function(){
+        if(tAnswered)return;tAnswered=true;
+        var v=inp.value.trim().toLowerCase();
+        var ok=v===correct.toLowerCase()||(v.length>3&&correct.toLowerCase().indexOf(v)!==-1);
+        inp.style.borderColor=ok?"#34d399":"#7c6ef0";
+        fb.innerHTML=ok
+          ?'<span style="color:#34d399;font-size:.82rem">\u2713 \u041e\u0442\u043b\u0438\u0447\u043d\u043e!</span>'
+          :'<span style="color:#55556a;font-size:.82rem">\u042d\u0442\u0430\u043b\u043e\u043d: <em>'+esc(correct)+'</em></span>';
+        if(ok)lodXP+=5;
+        lodCheck();
+      });
+      inp.addEventListener("keydown",function(e){if(e.key==="Enter")checkbtn.click();});
+    })(tinp,tphrase.en,tfb,tcb);
+    tbox.appendChild(tinp);tbox.appendChild(tcb);tbox.appendChild(tfb);
+    tDiv.appendChild(tbox);
+    lodEl.appendChild(tDiv);
+    lodEl.appendChild(finLodBtn);
+  }
+
 }
 
 function showDetail(html){
