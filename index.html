@@ -1026,7 +1026,12 @@ async function syncSave(){try{await fetch(SB_URL+'/rest/v1/progress',{method:'PO
 async function syncLoad(){try{var r=await fetch(SB_URL+'/rest/v1/progress?user_id=eq.'+USER_ID+'&select=data',{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});var rows=await r.json();if(rows&&rows.length&&rows[0].data){var d=rows[0].data;if(d.cards)cards=d.cards;if(d.custom)custom=d.custom;if(d.xp)xp=d.xp;if(d.streak)streak=d.streak;if(d.ldate)ldate=d.ldate;var allp2=ap();Object.keys(allp2).forEach(function(k){if(!cards[k])cards[k]={key:k,step:0,next:td(),str:0,seen:0};});lss('pl_cards',cards);return true;}}catch(e){}return false;}
 // ── INIT ─────────────────────────────────────────────────────────────────
 updateUI();
-syncLoad().then(function(ok){if(ok){toast("Синхронизировано");updateUI();}startRv();});
+// load with timeout fallback
+var syncDone=false;
+var syncTimeout=setTimeout(function(){if(!syncDone){syncDone=true;startRv();}},3000);
+syncLoad().then(function(ok){
+  if(!syncDone){syncDone=true;clearTimeout(syncTimeout);if(ok){toast("Синхронизировано");updateUI();}startRv();}
+}).catch(function(){if(!syncDone){syncDone=true;clearTimeout(syncTimeout);startRv();}});
 
 function speak(text){
   if(!window.speechSynthesis){toast("Не поддерживается");return;}
