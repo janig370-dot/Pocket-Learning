@@ -504,7 +504,7 @@ function updateUI(){
   var pct=nx?Math.round((xp-lv.min)/(nx.min-lv.min)*100):100;
   document.getElementById("ts1").textContent="🔥 "+streak;
   var d=Object.values(cards).filter(due).length;
-  document.getElementById("ts2").textContent=d+" due";
+  document.getElementById("ts2").textContent=Math.min(d,10)+" / "+d+" due";
   document.getElementById("ts3").textContent=xp+" XP";
   document.getElementById("ts3").style.color=lv.c;
   document.getElementById("xpLv").textContent=lv.i+" "+lv.n;
@@ -577,33 +577,45 @@ function rvCard(){
 }
 
 document.getElementById("rvShowBtn").addEventListener("click",function(){
-  var key=rvQ[rvI],p=allp[key];
-  // show translation with speak button
+  var key=rvQ[rvI], p=allp[key];
+
+  // translation + speak
   var ruEl=document.getElementById("rvRu");
   ruEl.innerHTML="";
-  var ruTxt=document.createElement("span");ruTxt.textContent=p.ru;
-  var ruSpk=document.createElement("button");ruSpk.innerHTML="&#128266;";
+  var ruTxt=document.createElement("span");
+  ruTxt.textContent=p.ru&&p.ru.trim()?p.ru:"(перевод не добавлен — зайди в Browse)";
+  var ruSpk=document.createElement("button");
+  ruSpk.innerHTML="&#128266;";
   ruSpk.style.cssText="background:none;border:1.5px solid #2a2a38;border-radius:20px;color:#55556a;font-size:.82rem;padding:3px 10px;cursor:pointer;margin-left:10px;vertical-align:middle";
-  ruSpk.title="Произнести фразу";
   ruSpk.addEventListener("click",function(){speak(key);});
-  ruEl.appendChild(ruTxt);ruEl.appendChild(ruSpk);
+  ruEl.appendChild(ruTxt);
+  ruEl.appendChild(ruSpk);
 
+  // examples
   var ex=document.getElementById("rvEx");
   ex.innerHTML="";
-  var hint=document.createElement("div");hint.style.cssText="font-size:.66rem;color:#55556a;margin-bottom:6px";
+  var hint=document.createElement("div");
+  hint.style.cssText="font-size:.66rem;color:#55556a;margin-bottom:6px";
   hint.textContent="+ = добавить слово в изучение";
   ex.appendChild(hint);
-  (p.s||[]).forEach(function(s,si){
-    var d=document.createElement("div");d.className="rv-ex";
+
+  (p.s||[]).forEach(function(s){
+    var d=document.createElement("div");
+    d.className="rv-ex";
     d.style.cssText="display:flex;flex-direction:column;gap:4px;padding:10px 0;border-bottom:1px solid #1e1e28";
-    // top row: speak + sentence + add btn
-    var topRow=document.createElement("div");
-    topRow.style.cssText="display:flex;align-items:flex-start;gap:6px";
-    var spk=document.createElement("button");spk.innerHTML="&#128266;";
+
+    // top row: speak + sentence + add
+    var row=document.createElement("div");
+    row.style.cssText="display:flex;align-items:flex-start;gap:6px";
+    var spk=document.createElement("button");
+    spk.innerHTML="&#128266;";
     spk.style.cssText="background:none;border:none;color:#55556a;font-size:.8rem;cursor:pointer;flex-shrink:0;padding:0;margin-top:2px";
     (function(t){spk.addEventListener("click",function(e){e.stopPropagation();speak(t);});})(s);
-    var txt=document.createElement("span");txt.innerHTML=bold(s,key);txt.style.cssText="flex:1;line-height:1.7";
-    var ab=document.createElement("button");ab.textContent="+";
+    var txt=document.createElement("span");
+    txt.innerHTML=bold(s,key);
+    txt.style.cssText="flex:1;line-height:1.7";
+    var ab=document.createElement("button");
+    ab.textContent="+";
     ab.style.cssText="background:none;border:1px solid #2a2a38;border-radius:20px;color:#55556a;font-size:.68rem;padding:2px 6px;cursor:pointer;flex-shrink:0;margin-top:2px";
     (function(sent){ab.addEventListener("click",function(e){
       e.stopPropagation();
@@ -616,30 +628,39 @@ document.getElementById("rvShowBtn").addEventListener("click",function(){
       lss("pl_cust",custom);lss("pl_cards",cards);syncSave();
       gainXP(2);toast("+2 XP: \""+w+"\" добавлено! Переведи в Browse.");
     });})(s);
-    topRow.appendChild(spk);topRow.appendChild(txt);topRow.appendChild(ab);
-    d.appendChild(topRow);
-    // translation row - fetch via AI or show loading
+    row.appendChild(spk);row.appendChild(txt);row.appendChild(ab);
+    d.appendChild(row);
+
+    // translation row
     var trRow=document.createElement("div");
-    trRow.style.cssText="font-size:.76rem;color:#6b6b7f;font-style:italic;padding-left:22px;min-height:16px";
+    trRow.style.cssText="font-size:.76rem;color:#6b6b7f;font-style:italic;padding-left:22px";
     trRow.textContent="...";
     d.appendChild(trRow);
     ex.appendChild(d);
+
     // fetch translation
-    (function(sentence, trEl){
+    (function(sentence,trEl){
       if(!apiKey){trEl.textContent="";return;}
-      fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({messages:[{role:"user",content:"Translate to Russian in 1 short sentence: \""+sentence+"\""}],
-          system:"Translate English to Russian. Reply with translation only, no quotes, no explanation.",apiKey:apiKey})
+      fetch("/api/chat",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+          messages:[{role:"user",content:"Translate to Russian in 1 short sentence: \""+sentence+"\""}],
+          system:"Translate English to Russian. Reply with translation only, no quotes.",
+          apiKey:apiKey
+        })
       }).then(function(r){return r.json();}).then(function(data){
         var t=(data.content||[]).filter(function(b){return b.type==="text";}).map(function(b){return b.text;}).join("").trim();
         trEl.textContent=t||"";
       }).catch(function(){trEl.textContent="";});
-    })(s, trRow);
+    })(s,trRow);
   });
-document.getElementById("rvAns").style.display="block";
+
+  document.getElementById("rvAns").style.display="block";
   document.getElementById("rvShowWrap").style.display="none";
   document.getElementById("rvRateWrap").style.display="block";
 });
+
 
 // Build rate buttons
 (function(){
@@ -1112,6 +1133,7 @@ document.getElementById("nb-learn").addEventListener("click",function(){goTab("l
 document.getElementById("lBack").addEventListener("click",function(){
   document.getElementById("lhome").style.display="block";
   document.getElementById("ldetail").style.display="none";
+  document.getElementById("ldetailContent").innerHTML=""; // clear so next open is fresh
 });
 
 var curLTab="lessons";
