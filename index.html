@@ -890,19 +890,40 @@ async function syncLoad(){
 }
 
 // ── SPEECH ───────────────────────────────────────────────────────────────────
+function getBestVoice(){
+  var voices=window.speechSynthesis.getVoices();
+  // preferred American English voices by quality
+  var preferred=["Samantha","Alex","Karen","Moira","Daniel","Google US English","Microsoft Aria","Microsoft Guy"];
+  for(var i=0;i<preferred.length;i++){
+    var v=voices.find(function(v){return v.name.indexOf(preferred[i])!==-1;});
+    if(v)return v;
+  }
+  // fallback: any en-US
+  var enUS=voices.filter(function(v){return v.lang==="en-US";});
+  if(enUS.length)return enUS[0];
+  // fallback: any English
+  var en=voices.filter(function(v){return v.lang.indexOf("en")===0;});
+  if(en.length)return en[0];
+  return null;
+}
+
 function speak(text){
   if(!window.speechSynthesis){toast("Произношение не поддерживается");return;}
   window.speechSynthesis.cancel();
   var u=new SpeechSynthesisUtterance(text);
-  u.lang="en-US";u.rate=0.9;u.pitch=1;
-  var voices=window.speechSynthesis.getVoices();
-  var am=voices.find(function(v){return v.lang==="en-US";});
-  if(am)u.voice=am;
+  u.lang="en-US";
+  u.rate=0.82;
+  u.pitch=1;
+  u.volume=1;
+  var voice=getBestVoice();
+  if(voice)u.voice=voice;
   window.speechSynthesis.speak(u);
 }
-// voices load async on some browsers
+
+// preload voices (needed for Chrome/Safari async loading)
 if(window.speechSynthesis){
-  window.speechSynthesis.onvoiceschanged=function(){};
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged=function(){ window.speechSynthesis.getVoices(); };
 }
 
 // ── INIT ─────────────────────────────────────────────────────────────────
