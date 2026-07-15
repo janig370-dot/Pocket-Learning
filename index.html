@@ -289,12 +289,53 @@ select.finp option{background:#13131a}
     </div>
   </div>
 
+  <!-- IMPORT PAGE -->
+  <div class="pg" id="pg-import">
+    <div style="font-size:1rem;font-weight:700;margin-bottom:4px">Умный импорт</div>
+    <div style="font-size:.8rem;color:#55556a;margin-bottom:16px;line-height:1.6">Вставь текст урока в любом формате — слова, фразы, переводы, примеры. AI сам разберёт и добавит в твою базу.</div>
+
+    <!-- Image upload area -->
+    <div id="imgDropZone" style="border:2px dashed #2a2a38;border-radius:14px;padding:20px;text-align:center;margin-bottom:10px;cursor:pointer;transition:border-color .2s" onclick="document.getElementById('imgInput').click()">
+      <div style="font-size:1.8rem;margin-bottom:6px">📷</div>
+      <div style="font-size:.85rem;font-weight:600;margin-bottom:3px">Фото или скрин урока</div>
+      <div style="font-size:.74rem;color:#55556a">Нажми или перетащи картинку сюда</div>
+      <input type="file" id="imgInput" accept="image/*" style="display:none" multiple>
+    </div>
+    <div id="imgPreview" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"></div>
+
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div style="flex:1;height:1px;background:#1e1e28"></div>
+      <span style="font-size:.72rem;color:#55556a;font-weight:600">или вставь текст</span>
+      <div style="flex:1;height:1px;background:#1e1e28"></div>
+    </div>
+
+    <textarea id="importText" style="width:100%;background:#13131a;border:1.5px solid #1e1e28;border-radius:14px;color:#e8e8f0;font-size:.88rem;padding:14px;outline:none;resize:vertical;min-height:120px;line-height:1.6;margin-bottom:12px" placeholder="Вставь текст урока, список слов или просто скопируй из заметок..."></textarea>
+
+    <button id="importBtn" style="width:100%;padding:13px;background:linear-gradient(135deg,#7c6ef0,#c084fc);color:#fff;border:none;border-radius:14px;font-size:.95rem;font-weight:700;cursor:pointer;margin-bottom:16px">✨ Разобрать и добавить</button>
+
+    <div id="importResult" style="display:none">
+      <div style="font-size:.8rem;font-weight:700;color:#55556a;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">Найденные фразы:</div>
+      <div id="importList"></div>
+      <button id="importConfirm" style="width:100%;padding:12px;background:linear-gradient(135deg,#34d399,#059669);color:#fff;border:none;border-radius:12px;font-size:.9rem;font-weight:700;cursor:pointer;margin-top:12px">✓ Добавить всё в базу</button>
+    </div>
+
+    <div id="importLoading" style="display:none;text-align:center;padding:30px;color:#55556a">
+      <div style="font-size:1.5rem;margin-bottom:8px">⏳</div>
+      <div style="font-size:.88rem">AI разбирает текст...</div>
+    </div>
+
+    <div id="importApiWarn" style="display:none;background:rgba(248,113,113,.08);border:1.5px solid #f87171;border-radius:12px;padding:14px;font-size:.84rem;color:#f87171;margin-top:8px">
+      Для умного импорта нужен API ключ Anthropic. Добавь его в разделе Chat.
+    </div>
+  </div>
+
 </div>
 <div id="nav">
   <button class="nb on" id="nb-review"><span class="ni">&#128260;</span>Review<span class="nbadge" id="nbadge" style="display:none"></span></button>
   <button class="nb" id="nb-browse"><span class="ni">&#128218;</span>Browse</button>
   <button class="nb" id="nb-stats"><span class="ni">&#128202;</span>Stats</button>
   <button class="nb" id="nb-chat"><span class="ni">&#129302;</span>Chat</button>
+  <button class="nb" id="nb-import"><span class="ni">&#128203;</span>Import</button>
 </div>
 
 <div id="toast" style="position:fixed;top:14px;left:50%;transform:translateX(-50%);background:#7c6ef0;color:#fff;padding:9px 20px;border-radius:40px;font-weight:700;font-size:.82rem;box-shadow:0 6px 24px rgba(124,110,240,.5);white-space:nowrap;z-index:999;display:none"></div>
@@ -427,7 +468,7 @@ function updateUI(){
 var curTab="review";
 function goTab(name){
   curTab=name;
-  ["review","browse","stats","chat"].forEach(function(t){
+  ["review","browse","stats","chat","import"].forEach(function(t){
     document.getElementById("pg-"+t).classList.toggle("on",t===name);
     document.getElementById("nb-"+t).classList.toggle("on",t===name);
   });
@@ -837,6 +878,161 @@ async function doSend(){
   }
   chatBusy=false;document.getElementById("sendBtn").disabled=false;
 }
+
+// ── IMPORT ───────────────────────────────────────────────────────────────────
+var importedPhrases = [];
+
+document.getElementById("nb-import").addEventListener("click", function(){ goTab("import"); });
+
+// Image handling
+var uploadedImages = [];
+
+document.getElementById("imgInput").addEventListener("change", function(e){
+  Array.from(e.target.files).forEach(function(file){ addImageFile(file); });
+});
+
+var dropZone = document.getElementById("imgDropZone");
+dropZone.addEventListener("dragover", function(e){ e.preventDefault(); dropZone.style.borderColor="#7c6ef0"; });
+dropZone.addEventListener("dragleave", function(){ dropZone.style.borderColor="#2a2a38"; });
+dropZone.addEventListener("drop", function(e){
+  e.preventDefault(); dropZone.style.borderColor="#2a2a38";
+  Array.from(e.dataTransfer.files).forEach(function(file){
+    if(file.type.startsWith("image/")) addImageFile(file);
+  });
+});
+
+// paste image from clipboard
+document.addEventListener("paste", function(e){
+  if(curTab!=="import") return;
+  var items = e.clipboardData && e.clipboardData.items;
+  if(!items) return;
+  Array.from(items).forEach(function(item){
+    if(item.type.startsWith("image/")){
+      var file = item.getAsFile();
+      if(file) addImageFile(file);
+    }
+  });
+});
+
+function addImageFile(file){
+  var reader = new FileReader();
+  reader.onload = function(ev){
+    var dataUrl = ev.target.result;
+    var base64 = dataUrl.split(",")[1];
+    var mediaType = file.type || "image/jpeg";
+    uploadedImages.push({base64:base64, mediaType:mediaType, dataUrl:dataUrl});
+    renderImgPreview();
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderImgPreview(){
+  var prev = document.getElementById("imgPreview");
+  prev.innerHTML = "";
+  uploadedImages.forEach(function(img, i){
+    var wrap = document.createElement("div");
+    wrap.style.cssText = "position:relative;flex-shrink:0";
+    var im = document.createElement("img");
+    im.src = img.dataUrl;
+    im.style.cssText = "width:80px;height:80px;object-fit:cover;border-radius:10px;border:1.5px solid #1e1e28";
+    var del = document.createElement("button");
+    del.textContent = "×";
+    del.style.cssText = "position:absolute;top:-4px;right:-4px;width:18px;height:18px;background:#f87171;border:none;border-radius:50%;color:#fff;font-size:.75rem;cursor:pointer;line-height:18px;text-align:center;font-weight:700";
+    (function(idx){ del.addEventListener("click", function(){ uploadedImages.splice(idx,1); renderImgPreview(); }); })(i);
+    wrap.appendChild(im); wrap.appendChild(del);
+    prev.appendChild(wrap);
+  });
+}
+
+async function parseWithAI(messages){
+  var res = await fetch("/api/chat",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({messages:messages, system:"You extract English vocabulary from text or images. Return only valid JSON arrays. No markdown.", apiKey:apiKey})
+  });
+  var data = await res.json();
+  if(data.error) throw new Error(data.error.message);
+  var reply = (data.content||[]).filter(function(b){return b.type==="text";}).map(function(b){return b.text;}).join("");
+  var a=reply.indexOf("["), b=reply.lastIndexOf("]");
+  if(a!==-1&&b>a) reply=reply.slice(a,b+1);
+  return JSON.parse(reply);
+}
+
+document.getElementById("importBtn").addEventListener("click", async function(){
+  var text = document.getElementById("importText").value.trim();
+  var hasImages = uploadedImages.length > 0;
+  if(!text && !hasImages){ toast("Вставь текст или фото урока"); return; }
+  if(!apiKey){ document.getElementById("importApiWarn").style.display="block"; return; }
+
+  document.getElementById("importResult").style.display="none";
+  document.getElementById("importLoading").style.display="block";
+  document.getElementById("importApiWarn").style.display="none";
+  document.getElementById("importBtn").disabled=true;
+
+  var sysPrompt = "Parse and extract English words/phrases worth learning. Rules: focus on phrases, idioms, collocations, vocabulary (skip basic grammar words). Use provided Russian translation if available, otherwise add one. Add 1-2 casual American English example sentences. Return ONLY a JSON array: [{\"en\":\"phrase\",\"ru\":\"перевод\",\"tag\":\"General\",\"s\":[\"example1\",\"example2\"]}]";
+
+  try{
+    var content_parts = [];
+
+    // add images first
+    uploadedImages.forEach(function(img){
+      content_parts.push({type:"image",source:{type:"base64",media_type:img.mediaType,data:img.base64}});
+    });
+
+    // add text
+    var textPrompt = sysPrompt + (text ? "\n\nText:\n" + text : "\n\nExtract all English phrases/words from the image(s) above.");
+    content_parts.push({type:"text",text:textPrompt});
+
+    importedPhrases = await parseWithAI([{role:"user",content:content_parts}]);
+    renderImportList();
+    // clear images after success
+    uploadedImages = []; renderImgPreview();
+  } catch(e){
+    toast("Ошибка: "+String(e));
+  }
+  document.getElementById("importLoading").style.display="none";
+  document.getElementById("importBtn").disabled=false;
+});
+
+function renderImportList(){
+  var list = document.getElementById("importList");
+  list.innerHTML="";
+  importedPhrases.forEach(function(p,i){
+    var card=document.createElement("div");
+    card.style.cssText="background:#13131a;border:1.5px solid #1e1e28;border-radius:12px;padding:13px 14px;margin-bottom:8px;display:flex;align-items:flex-start;gap:10px";
+    var cb=document.createElement("input");
+    cb.type="checkbox";cb.checked=true;cb.id="imp_"+i;
+    cb.style.cssText="margin-top:3px;flex-shrink:0;width:16px;height:16px;accent-color:#7c6ef0;cursor:pointer";
+    var info=document.createElement("div");info.style.flex="1";
+    info.innerHTML="<div style='font-size:.88rem;font-weight:700;margin-bottom:2px'>"+esc(p.en)+"</div>"+
+      "<div style='font-size:.76rem;color:#c084fc;margin-bottom:4px'>"+esc(p.ru)+"</div>"+
+      (p.s&&p.s.length?"<div style='font-size:.74rem;color:#55556a;font-style:italic'>"+esc(p.s[0])+"</div>":"");
+    card.appendChild(cb);card.appendChild(info);
+    list.appendChild(card);
+  });
+  document.getElementById("importResult").style.display="block";
+}
+
+document.getElementById("importConfirm").addEventListener("click", function(){
+  var added=0;
+  importedPhrases.forEach(function(p,i){
+    var cb=document.getElementById("imp_"+i);
+    if(!cb||!cb.checked)return;
+    if(!p.en||!p.ru)return;
+    var key=p.en.trim();
+    custom[key]={ru:p.ru,tag:p.tag||"General",s:p.s||[],custom:true};
+    if(!cards[key])cards[key]={key:key,step:0,next:td(),str:0,seen:0};
+    added++;
+  });
+  lss("pl_cust",custom);lss("pl_cards",cards);
+  syncSave();
+  gainXP(added*10);
+  toast("✓ Добавлено "+added+" фраз +"+added*10+" XP!");
+  document.getElementById("importText").value="";
+  document.getElementById("importResult").style.display="none";
+  importedPhrases=[];
+  goTab("browse");
+});
 
 // ── SUPABASE SYNC ────────────────────────────────────────────────────────────
 var SB_URL = "https://xffrdbtrhfmxtnpfwktv.supabase.co";
