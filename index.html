@@ -631,29 +631,7 @@ document.getElementById("rvShowBtn").addEventListener("click",function(){
     row.appendChild(spk);row.appendChild(txt);row.appendChild(ab);
     d.appendChild(row);
 
-    // translation row
-    var trRow=document.createElement("div");
-    trRow.style.cssText="font-size:.76rem;color:#6b6b7f;font-style:italic;padding-left:22px";
-    trRow.textContent="...";
-    d.appendChild(trRow);
     ex.appendChild(d);
-
-    // fetch translation
-    (function(sentence,trEl){
-      if(!apiKey){trEl.textContent="";return;}
-      fetch("/api/chat",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({
-          messages:[{role:"user",content:"Translate to Russian in 1 short sentence: \""+sentence+"\""}],
-          system:"Translate English to Russian. Reply with translation only, no quotes.",
-          apiKey:apiKey
-        })
-      }).then(function(r){return r.json();}).then(function(data){
-        var t=(data.content||[]).filter(function(b){return b.type==="text";}).map(function(b){return b.text;}).join("").trim();
-        trEl.textContent=t||"";
-      }).catch(function(){trEl.textContent="";});
-    })(s,trRow);
   });
 
   document.getElementById("rvAns").style.display="block";
