@@ -146,6 +146,12 @@ select.finp option{background:#13131a}
 .api-note{font-size:.66rem;color:#55556a;margin-top:6px;line-height:1.5}
 
 @keyframes fadeup{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.drop-zone{border:2px dashed #2a2a38;border-radius:14px;padding:22px;text-align:center;cursor:pointer;margin-bottom:10px;transition:border-color .2s}
+.drop-zone:hover{border-color:#7c6ef0}
+.img-preview{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.imp-card{background:#13131a;border:1.5px solid #1e1e28;border-radius:12px;padding:13px 14px;margin-bottom:8px;display:flex;align-items:flex-start;gap:10px}
+.imp-en{font-size:.88rem;font-weight:700;margin-bottom:2px}
+.imp-ru{font-size:.74rem;color:#c084fc}
 .ltabs{display:flex;gap:4px;background:#13131a;border-radius:12px;padding:4px;margin-bottom:16px}
 .ltab{flex:1;padding:9px 4px;border:none;border-radius:9px;background:transparent;color:#55556a;font-size:.72rem;font-weight:700;cursor:pointer}
 .ltab.on{background:#7c6ef0;color:#fff}
@@ -336,6 +342,42 @@ select.finp option{background:#13131a}
       <div id="ldetailContent"></div>
     </div>
   </div>
+
+  <!-- IMPORT -->
+  <div class="pg" id="pg-import">
+    <div style="font-size:1rem;font-weight:700;margin-bottom:4px">&#128203; Умный импорт</div>
+    <div style="font-size:.8rem;color:#55556a;margin-bottom:14px;line-height:1.6">Вставь фото урока или текст — AI разберёт и добавит фразы в базу.</div>
+
+    <div class="drop-zone" id="dropZone" onclick="document.getElementById('imgInp').click()">
+      <div style="font-size:1.8rem;margin-bottom:6px">&#128247;</div>
+      <div style="font-size:.85rem;font-weight:600;margin-bottom:3px">Фото или скрин урока</div>
+      <div style="font-size:.74rem;color:#55556a">Нажми, перетащи или Cmd+V</div>
+      <input type="file" id="imgInp" accept="image/*" multiple style="display:none">
+    </div>
+    <div class="img-preview" id="imgPreview"></div>
+
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div style="flex:1;height:1px;background:#1e1e28"></div>
+      <span style="font-size:.7rem;color:#55556a;font-weight:600">или текст</span>
+      <div style="flex:1;height:1px;background:#1e1e28"></div>
+    </div>
+
+    <textarea id="impText" style="width:100%;background:#13131a;border:1.5px solid #1e1e28;border-radius:14px;color:#e8e8f0;font-size:.88rem;padding:14px;outline:none;resize:vertical;min-height:110px;line-height:1.6;margin-bottom:12px;font-family:inherit" placeholder="Вставь текст урока, слова, фразы..."></textarea>
+
+    <button id="impBtn" style="width:100%;padding:13px;background:linear-gradient(135deg,#7c6ef0,#c084fc);color:#fff;border:none;border-radius:14px;font-size:.95rem;font-weight:700;cursor:pointer;margin-bottom:14px">&#10024; Разобрать и добавить</button>
+
+    <div id="impLoading" style="display:none;text-align:center;padding:24px;color:#55556a">
+      <div style="font-size:1.4rem;margin-bottom:8px">&#9203;</div>AI разбирает текст...
+    </div>
+    <div id="impWarn" style="display:none;background:rgba(248,113,113,.08);border:1.5px solid #f87171;border-radius:12px;padding:14px;font-size:.84rem;color:#f87171;margin-bottom:10px">
+      Нужен API ключ Anthropic. Добавь его в разделе Chat.
+    </div>
+    <div id="impResult" style="display:none">
+      <div class="secttitle" style="margin-bottom:10px">Найденные фразы:</div>
+      <div id="impList"></div>
+      <button id="impConfirm" style="width:100%;padding:12px;background:linear-gradient(135deg,#34d399,#059669);color:#fff;border:none;border-radius:12px;font-size:.9rem;font-weight:700;cursor:pointer;margin-top:10px">&#10003; Добавить всё в базу</button>
+    </div>
+  </div>
 </div>
 <div id="nav">
   <button class="nb on" id="nb-review"><span class="ni">&#128260;</span>Review<span class="nbadge" id="nbadge" style="display:none"></span></button>
@@ -343,6 +385,7 @@ select.finp option{background:#13131a}
   <button class="nb" id="nb-stats"><span class="ni">&#128202;</span>Stats</button>
   <button class="nb" id="nb-chat"><span class="ni">&#129302;</span>Chat</button>
   <button class="nb" id="nb-learn"><span class="ni">&#127891;</span>Learn</button>
+  <button class="nb" id="nb-import"><span class="ni">&#128203;</span>Import</button>
 </div>
 
 <div id="toast" style="position:fixed;top:14px;left:50%;transform:translateX(-50%);background:#7c6ef0;color:#fff;padding:9px 20px;border-radius:40px;font-weight:700;font-size:.82rem;box-shadow:0 6px 24px rgba(124,110,240,.5);white-space:nowrap;z-index:999;display:none"></div>
@@ -474,7 +517,7 @@ function updateUI(){
 var curTab="review";
 function goTab(name){
   curTab=name;
-  ["review","browse","stats","chat","learn"].forEach(function(t){
+  ["review","browse","stats","chat","learn","import"].forEach(function(t){
     document.getElementById("pg-"+t).classList.toggle("on",t===name);
     document.getElementById("nb-"+t).classList.toggle("on",t===name);
   });
@@ -928,11 +971,11 @@ var TOPICS=[
 var TASKS=[
   {id:"tk1",icon:"&#9999;&#65039;",title:"Fill in the blank",desc:"Вставь правильное слово",
    exercises:[
-     {s:"I completely ___ we had plans tonight.",w:"forgot",opts:["forgot","forgave","forward"]},
-     {s:"She has a lot of ___ in herself.",w:"confidence",opts:["confidence","compassion","concern"]},
-     {s:"Don't let one bad day ___ you off-track.",w:"throw",opts:["take","throw","pull"]},
-     {s:"I ___ on her for everything.",w:"rely",opts:["rely","count","depend"]},
-     {s:"You can ___ down — nobody is listening.",w:"pipe",opts:["pipe","calm","settle"]}]},
+     {s:"I completely ___ we had plans tonight.",w:"forgot",ru:"Я полностью забыл что у нас были планы сегодня.",opts:["forgot","forgave","forward"]},
+     {s:"She has a lot of ___ in herself.",w:"confidence",ru:"У неё очень много уверенности в себе.",opts:["confidence","compassion","concern"]},
+     {s:"Don't let one bad day ___ you off-track.",w:"throw",ru:"Не позволяй одному плохому дню выбить тебя из колеи.",opts:["take","throw","pull"]},
+     {s:"I ___ on her for everything.",w:"rely",ru:"Я полагаюсь на неё во всём.",opts:["rely","count","depend"]},
+     {s:"You can ___ down — nobody is listening.",w:"pipe",ru:"Можешь заткнуться — всё равно никто не слушает.",opts:["pipe","calm","settle"]}]},
   {id:"tk2",icon:"&#128288;",title:"Translate to English",desc:"Переведи на американский английский",
    exercises:[
      {ru:"Я полностью забыл о встрече.",en:"I completely forgot about the meeting."},
@@ -1096,65 +1139,275 @@ function openTask(tk){
   document.getElementById("lhome").style.display="none";
   document.getElementById("ldetail").style.display="block";
   var el=document.getElementById("ldetailContent"); el.innerHTML="";
-
   el.innerHTML='<div style="font-size:2rem;margin-bottom:6px">'+tk.icon+'</div><div style="font-size:1.1rem;font-weight:800;margin-bottom:4px">'+esc(tk.title)+'</div><div style="font-size:.8rem;color:#55556a;margin-bottom:14px">'+esc(tk.desc)+'</div>';
+
+  var totalEx=tk.exercises.length, doneEx=0, totalXP=0;
+
+  // FINISH button (hidden initially)
+  var finBtn=document.createElement("button");
+  finBtn.style.cssText="width:100%;padding:13px;background:linear-gradient(135deg,#34d399,#059669);color:#fff;border:none;border-radius:14px;font-size:.95rem;font-weight:700;cursor:pointer;margin-top:16px;display:none";
+  finBtn.textContent="\u2713 \u0417\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u044c \u0443\u0440\u043e\u043a";
+  finBtn.addEventListener("click",function(){
+    gainXP(totalXP);
+    toast("+"+totalXP+" XP \u2014 \u0443\u0440\u043e\u043a \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043d!");
+    document.getElementById("lhome").style.display="block";
+    document.getElementById("ldetail").style.display="none";
+  });
+
+  function checkDone(){
+    doneEx++;
+    if(doneEx>=totalEx){ finBtn.style.display="block"; el.appendChild(finBtn); el.scrollTop=el.scrollHeight; }
+  }
 
   tk.exercises.forEach(function(ex){
     var box=document.createElement("div");box.className="qbox";box.style.marginBottom="12px";
 
+    // ── FILL IN THE BLANK ──────────────────────────────────────────────
     if(tk.id==="tk1"){
-      var q=document.createElement("div");q.className="qquestion";
-      q.innerHTML=esc(ex.s).replace("___",'<span style="border-bottom:2px solid #7c6ef0;padding:0 20px;color:#7c6ef0">___</span>');
-      box.appendChild(q);
+      var qd=document.createElement("div");qd.className="qquestion";
+      qd.innerHTML=esc(ex.s).replace("___",'<span style="border-bottom:2px solid #7c6ef0;padding:0 20px;color:#7c6ef0">___</span>');
+      box.appendChild(qd);
       var answered=false;
       ex.opts.forEach(function(opt){
         var btn=document.createElement("button");btn.className="qopt";btn.textContent=opt;
         var isOk=opt===ex.w;
         (function(b,ok){b.addEventListener("click",function(){
-          if(answered)return;answered=true;
+          if(answered)return; answered=true;
           box.querySelectorAll(".qopt").forEach(function(x){x.disabled=true;});
           b.classList.add(ok?"ok":"no");
-          if(!ok)box.querySelectorAll(".qopt").forEach(function(x){if(x.textContent===ex.w)x.classList.add("ok");});
-          if(ok){gainXP(5);toast("+5 XP \u2713");}
+          if(!ok) box.querySelectorAll(".qopt").forEach(function(x){if(x.textContent===ex.w)x.classList.add("ok");});
+          // show sentence translation
+          if(ex.ru){
+            var tr=document.createElement("div");
+            tr.style.cssText="margin-top:10px;font-size:.8rem;color:#c084fc;font-style:italic;padding:8px 12px;background:rgba(192,132,252,.08);border-radius:8px";
+            tr.textContent="\u2022 "+ex.ru;
+            box.appendChild(tr);
+          }
+          if(ok) totalXP+=5;
+          checkDone();
         });})(btn,isOk);
         box.appendChild(btn);
       });
 
+    // ── TRANSLATE TO ENGLISH ───────────────────────────────────────────
     } else if(tk.id==="tk2"){
-      var q=document.createElement("div");q.className="qquestion";q.textContent=ex.ru;box.appendChild(q);
-      var inp=document.createElement("input");inp.className="tinp";inp.placeholder="Напиши по-английски...";
-      var cb=document.createElement("button");cb.className="tchk";cb.textContent="Проверить";
+      var qd=document.createElement("div");qd.className="qquestion";qd.textContent=ex.ru;box.appendChild(qd);
+      // level hint
+      var lvHint=document.createElement("div");
+      lvHint.style.cssText="font-size:.72rem;color:#55556a;margin-bottom:10px";
+      lvHint.innerHTML='\ud83d\udca1 <b style="color:#fbbf24">+10 XP</b> \u0437\u0430 \u043f\u0440\u043e\u0434\u0432\u0438\u043d\u0443\u0442\u0443\u044e \u043b\u0435\u043a\u0441\u0438\u043a\u0443 &nbsp;\u00b7&nbsp; <b style="color:#60a5fa">+5 XP</b> \u0445\u043e\u0440\u043e\u0448\u043e &nbsp;\u00b7&nbsp; <b style="color:#34d399">+3 XP</b> \u043f\u0440\u0438\u043c\u0438\u0442\u0438\u0432\u043d\u043e';
+      box.appendChild(lvHint);
+      var inp=document.createElement("input");inp.className="tinp";inp.placeholder="\u041d\u0430\u043f\u0438\u0448\u0438 \u043f\u043e-\u0430\u043d\u0433\u043b\u0438\u0439\u0441\u043a\u0438...";
+      var cb=document.createElement("button");cb.className="tchk";cb.textContent="\u041f\u0440\u043e\u0432\u0435\u0440\u0438\u0442\u044c";
       var fb=document.createElement("div");fb.style.marginTop="8px";
       var answered=false;
-      (function(input,correct,feedback,checkbtn){
-        checkbtn.addEventListener("click",function(){
-          if(answered)return;answered=true;
-          var v=input.value.trim().toLowerCase();
-          var ok=v===correct.toLowerCase()||(v.length>4&&correct.toLowerCase().indexOf(v)!==-1);
-          input.style.borderColor=ok?"#34d399":"#f87171";
-          feedback.innerHTML=ok?'<span style="color:#34d399;font-size:.82rem">\u2713 Верно!</span>':'<span style="color:#f87171;font-size:.82rem">Правильно: <em>'+esc(correct)+'</em></span>';
-          if(ok){gainXP(5);toast("+5 XP \u2713");}
+      (function(input,correct,feedback,checkbtn,e2){
+        checkbtn.addEventListener("click",async function(){
+          if(answered)return; answered=true;
+          input.disabled=true; checkbtn.disabled=true;
+          feedback.innerHTML='<span style="color:#55556a;font-size:.82rem">\u23f3 \u041e\u0446\u0435\u043d\u0438\u0432\u0430\u044e...</span>';
+
+          var val=input.value.trim();
+          if(!val){ feedback.innerHTML='<span style="color:#f87171">\u041d\u0430\u043f\u0438\u0448\u0438 \u043e\u0442\u0432\u0435\u0442!</span>'; answered=false; input.disabled=false; checkbtn.disabled=false; return; }
+
+          if(!apiKey){
+            // fallback simple check
+            var simple=val.toLowerCase()===correct.toLowerCase();
+            var xpEarned=simple?5:2;
+            feedback.innerHTML=simple
+              ?'<span style="color:#34d399;font-size:.82rem">\u2713 \u0425\u043e\u0440\u043e\u0448\u043e! +'+xpEarned+' XP</span>'
+              :'<span style="color:#f87171;font-size:.82rem">\u041f\u0440\u0430\u0432\u0438\u043b\u044c\u043d\u043e: <em>'+esc(correct)+'</em></span>';
+            totalXP+=xpEarned; checkDone(); return;
+          }
+
+          try{
+            var evalPrompt='The student was asked to translate this Russian phrase into English:\nRussian: "'+e2.ru+'"\nCorrect answer: "'+correct+'"\nStudent answer: "'+val+'"\n\nEvaluate the student answer on 3 levels:\n- Level 3 (Advanced, +10 XP): correct meaning, natural American English, good vocabulary\n- Level 2 (Good, +5 XP): correct meaning, acceptable English, simple vocabulary\n- Level 1 (Basic, +3 XP): mostly correct meaning but awkward or very simple\n- Level 0 (Wrong, +0 XP): wrong meaning or incomprehensible\n\nRespond ONLY with JSON: {"level":0-3,"feedback":"short comment in Russian","xp":0/3/5/10}';
+            var res=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},
+              body:JSON.stringify({messages:[{role:"user",content:evalPrompt}],system:"You evaluate English translations. Return only valid JSON.",apiKey:apiKey})});
+            var data=await res.json();
+            var txt=(data.content||[]).filter(function(b){return b.type==="text";}).map(function(b){return b.text;}).join("").trim();
+            var a=txt.indexOf("{"),b=txt.lastIndexOf("}");
+            if(a!==-1&&b>a)txt=txt.slice(a,b+1);
+            var result=JSON.parse(txt);
+            var xpEarned=result.xp||0;
+            var colors=["#f87171","#34d399","#60a5fa","#fbbf24"];
+            var icons=["✗","✓","✓✓","⭐"];
+            feedback.innerHTML='<div style="font-size:.84rem;color:'+colors[result.level]+';margin-bottom:4px">'+icons[result.level]+' '+esc(result.feedback)+' <b>+'+xpEarned+' XP</b></div>'
+              +'<div style="font-size:.76rem;color:#55556a">\u042d\u0442\u0430\u043b\u043e\u043d: <em>'+esc(correct)+'</em></div>';
+            totalXP+=xpEarned;
+          }catch(err){
+            feedback.innerHTML='<span style="color:#55556a;font-size:.82rem">\u042d\u0442\u0430\u043b\u043e\u043d: <em>'+esc(correct)+'</em></span>';
+          }
+          checkDone();
         });
         input.addEventListener("keydown",function(e){if(e.key==="Enter")checkbtn.click();});
-      })(inp,ex.en,fb,cb);
+      })(inp,ex.en,fb,cb,ex);
       box.appendChild(inp);box.appendChild(cb);box.appendChild(fb);
 
+    // ── SPOT THE ERROR ─────────────────────────────────────────────────
     } else if(tk.id==="tk3"){
-      var q=document.createElement("div");q.className="qquestion";q.textContent="Что не так?";box.appendChild(q);
-      var wr=document.createElement("div");wr.style.cssText="font-size:.9rem;color:#f87171;padding:8px 12px;background:rgba(248,113,113,.08);border-radius:8px;margin-bottom:10px";wr.textContent=ex.wrong;box.appendChild(wr);
+      var qd=document.createElement("div");qd.className="qquestion";qd.textContent="\u041d\u0430\u0439\u0434\u0438 \u043e\u0448\u0438\u0431\u043a\u0443:";box.appendChild(qd);
+      // split sentence into clickable words
+      var wordWrap=document.createElement("div");
+      wordWrap.style.cssText="font-size:.92rem;line-height:2;margin-bottom:10px;padding:10px 12px;background:#0a0a0c;border-radius:10px";
       var answered=false;
-      var sb=document.createElement("button");sb.className="qopt";sb.textContent="Показать ответ";
-      (function(btn,e){btn.addEventListener("click",function(){
-        if(answered)return;answered=true;btn.style.display="none";
-        var ans=document.createElement("div");
-        ans.innerHTML='<div style="font-size:.85rem;color:#34d399;margin-bottom:5px">\u2713 '+esc(e.correct)+'</div><div style="font-size:.76rem;color:#55556a">'+esc(e.explain)+'</div>';
-        box.appendChild(ans);gainXP(3);toast("+3 XP");
-      });})(sb,ex);
-      box.appendChild(sb);
+      // find the wrong word(s) by comparing wrong vs correct
+      var wrongWords=ex.wrong.toLowerCase().replace(/[.,!?]/g,"").split(" ");
+      var correctWords=ex.correct.toLowerCase().replace(/[.,!?]/g,"").split(" ");
+      var errorIdx=[];
+      wrongWords.forEach(function(w,i){ if(w!==correctWords[i]) errorIdx.push(i); });
+
+      ex.wrong.split(/(\s+)/).forEach(function(part,pi){
+        if(/^\s+$/.test(part)){ wordWrap.appendChild(document.createTextNode(part)); return; }
+        var clean=part.replace(/[.,!?]/g,"").toLowerCase();
+        var wordIdx=wrongWords.indexOf(clean);
+        var span=document.createElement("span");
+        span.textContent=part;
+        span.style.cssText="cursor:pointer;padding:2px 4px;border-radius:5px;border:1.5px solid transparent;transition:all .15s;display:inline-block";
+        span.addEventListener("mouseenter",function(){if(!answered)span.style.borderColor="#7c6ef0";});
+        span.addEventListener("mouseleave",function(){if(!answered&&!span.classList.contains("ok")&&!span.classList.contains("no"))span.style.borderColor="transparent";});
+        (function(s,wi){
+          s.addEventListener("click",function(){
+            if(answered)return;
+            var isError=errorIdx.indexOf(wi)!==-1;
+            if(isError){
+              answered=true;
+              s.style.background="rgba(248,113,113,.2)";s.style.borderColor="#f87171";s.style.color="#f87171";
+              // show correct
+              var ans=document.createElement("div");
+              ans.style.cssText="margin-top:10px;font-size:.84rem";
+              ans.innerHTML='<div style="color:#34d399;margin-bottom:4px">\u2713 '+esc(ex.correct)+'</div><div style="color:#55556a;font-size:.78rem">'+esc(ex.explain)+'</div>';
+              box.appendChild(ans);
+              totalXP+=5; checkDone(); toast("+5 XP \u2713");
+            } else {
+              s.style.background="rgba(96,165,250,.12)";s.style.borderColor="#60a5fa";
+              setTimeout(function(){ s.style.background=""; s.style.borderColor="transparent"; },600);
+              toast("\u041d\u0435 \u044d\u0442\u043e \u2014 \u043f\u043e\u043f\u0440\u043e\u0431\u0443\u0439 \u0435\u0449\u0451");
+            }
+          });
+        })(span, wordIdx);
+        wordWrap.appendChild(span);
+      });
+      box.appendChild(wordWrap);
     }
     el.appendChild(box);
   });
 }
+
+// ── IMPORT ───────────────────────────────────────────────────────────────────
+var impImgs=[], impParsed=[];
+
+document.getElementById("nb-import").addEventListener("click",function(){goTab("import");});
+
+document.getElementById("imgInp").addEventListener("change",function(e){
+  Array.from(e.target.files).forEach(addImg);
+});
+
+var dz=document.getElementById("dropZone");
+dz.addEventListener("dragover",function(e){e.preventDefault();dz.style.borderColor="#7c6ef0";});
+dz.addEventListener("dragleave",function(){dz.style.borderColor="#2a2a38";});
+dz.addEventListener("drop",function(e){
+  e.preventDefault();dz.style.borderColor="#2a2a38";
+  Array.from(e.dataTransfer.files).forEach(function(f){if(f.type.startsWith("image/"))addImg(f);});
+});
+
+document.addEventListener("paste",function(e){
+  if(curTab!=="import")return;
+  var items=e.clipboardData&&e.clipboardData.items;
+  if(!items)return;
+  Array.from(items).forEach(function(item){
+    if(item.type.startsWith("image/")){var f=item.getAsFile();if(f)addImg(f);}
+  });
+});
+
+function addImg(file){
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    var url=ev.target.result;
+    impImgs.push({b64:url.split(",")[1],mt:file.type||"image/jpeg",url:url});
+    renderImgPreview();
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderImgPreview(){
+  var el=document.getElementById("imgPreview"); el.innerHTML="";
+  impImgs.forEach(function(img,i){
+    var wrap=document.createElement("div");wrap.style.position="relative";
+    var im=document.createElement("img");im.src=img.url;
+    im.style.cssText="width:76px;height:76px;object-fit:cover;border-radius:10px;border:1.5px solid #1e1e28";
+    var del=document.createElement("button");del.textContent="\xd7";
+    del.style.cssText="position:absolute;top:-4px;right:-4px;width:18px;height:18px;background:#f87171;border:none;border-radius:50%;color:#fff;font-size:.75rem;cursor:pointer;line-height:18px;text-align:center;font-weight:700";
+    (function(idx){del.addEventListener("click",function(){impImgs.splice(idx,1);renderImgPreview();});})(i);
+    wrap.appendChild(im);wrap.appendChild(del);el.appendChild(wrap);
+  });
+}
+
+document.getElementById("impBtn").addEventListener("click",async function(){
+  var text=document.getElementById("impText").value.trim();
+  if(!text&&!impImgs.length){toast("Добавь фото или текст");return;}
+  if(!apiKey){document.getElementById("impWarn").style.display="block";return;}
+  document.getElementById("impWarn").style.display="none";
+  document.getElementById("impResult").style.display="none";
+  document.getElementById("impLoading").style.display="block";
+  document.getElementById("impBtn").disabled=true;
+
+  var prompt='Parse this and extract English words/phrases worth learning. For each: English phrase, Russian translation, 1-2 casual American example sentences. Return ONLY a JSON array, no markdown: [{"en":"phrase","ru":"перевод","tag":"General","s":["example1","example2"]}]'+(text?'\n\nText:\n'+text:'\n\nExtract all English phrases from the image(s).');
+
+  try{
+    var parts=[];
+    impImgs.forEach(function(img){parts.push({type:"image",source:{type:"base64",media_type:img.mt,data:img.b64}});});
+    parts.push({type:"text",text:prompt});
+
+    var res=await fetch("/api/chat",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({messages:[{role:"user",content:parts}],system:"You extract vocabulary. Return only valid JSON arrays.",apiKey:apiKey})
+    });
+    var data=await res.json();
+    if(data.error)throw new Error(data.error.message);
+    var txt=(data.content||[]).filter(function(b){return b.type==="text";}).map(function(b){return b.text;}).join("").trim();
+    var a=txt.indexOf("["),b=txt.lastIndexOf("]");
+    if(a!==-1&&b>a)txt=txt.slice(a,b+1);
+    impParsed=JSON.parse(txt);
+    renderImpList();
+    impImgs=[];renderImgPreview();
+  }catch(e){toast("Ошибка: "+String(e));}
+
+  document.getElementById("impLoading").style.display="none";
+  document.getElementById("impBtn").disabled=false;
+});
+
+function renderImpList(){
+  var list=document.getElementById("impList"); list.innerHTML="";
+  impParsed.forEach(function(p,i){
+    var card=document.createElement("div");card.className="imp-card";
+    var cb=document.createElement("input");cb.type="checkbox";cb.checked=true;cb.id="ic"+i;
+    cb.style.cssText="margin-top:2px;flex-shrink:0;width:16px;height:16px;accent-color:#7c6ef0;cursor:pointer";
+    var info=document.createElement("div");info.style.flex="1";
+    info.innerHTML='<div class="imp-en">'+esc(p.en)+'</div><div class="imp-ru">'+esc(p.ru)+'</div>'+(p.s&&p.s.length?'<div style="font-size:.72rem;color:#55556a;font-style:italic;margin-top:2px">'+esc(p.s[0])+'</div>':'');
+    card.appendChild(cb);card.appendChild(info);list.appendChild(card);
+  });
+  document.getElementById("impResult").style.display="block";
+}
+
+document.getElementById("impConfirm").addEventListener("click",function(){
+  var added=0;
+  impParsed.forEach(function(p,i){
+    var cb=document.getElementById("ic"+i);
+    if(!cb||!cb.checked||!p.en||!p.ru)return;
+    var key=p.en.trim();
+    custom[key]={ru:p.ru,tag:p.tag||"General",s:p.s||[],custom:true};
+    if(!cards[key])cards[key]={key:key,step:0,next:td(),str:0,seen:0};
+    added++;
+  });
+  lss("pl_cust",custom);lss("pl_cards",cards);syncSave();
+  gainXP(added*10);toast("\u2713 Добавлено "+added+" фраз +"+added*10+" XP!");
+  document.getElementById("impText").value="";
+  document.getElementById("impResult").style.display="none";
+  impParsed=[];
+  goTab("browse");
+});
 
 </script>
 </body>
