@@ -146,6 +146,38 @@ select.finp option{background:#13131a}
 .api-note{font-size:.66rem;color:#55556a;margin-top:6px;line-height:1.5}
 
 @keyframes fadeup{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.ltabs{display:flex;gap:4px;background:#13131a;border-radius:12px;padding:4px;margin-bottom:16px}
+.ltab{flex:1;padding:9px 4px;border:none;border-radius:9px;background:transparent;color:#55556a;font-size:.72rem;font-weight:700;cursor:pointer}
+.ltab.on{background:#7c6ef0;color:#fff}
+.lcard{background:#13131a;border:1.5px solid #1e1e28;border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer;display:flex;align-items:center;gap:12px}
+.lcard:active{border-color:#7c6ef0}
+.lico{font-size:1.6rem;flex-shrink:0}
+.ltitle{font-size:.88rem;font-weight:700;margin-bottom:2px}
+.ldesc{font-size:.72rem;color:#55556a;line-height:1.4}
+.ltag{font-size:.62rem;font-weight:700;color:#7c6ef0;background:rgba(124,110,240,.12);padding:2px 8px;border-radius:20px;margin-top:4px;display:inline-block}
+.theory{background:#13131a;border:1.5px solid #1e1e28;border-radius:14px;padding:16px;margin-bottom:12px;font-size:.85rem;line-height:1.75;color:#c8c8d8}
+.theory b{color:#c084fc}
+.exbox{background:#13131a;border:1.5px solid #1e1e28;border-radius:14px;padding:14px;margin-bottom:12px}
+.exline{font-size:.88rem;line-height:1.7;color:#a8a8c0;padding:8px 0;border-bottom:1px solid #1e1e28;display:flex;align-items:flex-start;gap:8px}
+.exline:last-child{border-bottom:none}
+.qbox{background:#13131a;border:1.5px solid #1e1e28;border-radius:14px;padding:14px;margin-bottom:10px}
+.qquestion{font-size:.88rem;font-weight:600;margin-bottom:10px}
+.qopt{display:block;width:100%;padding:10px 13px;background:#0a0a0c;border:1.5px solid #1e1e28;border-radius:10px;color:#e8e8f0;font-size:.84rem;cursor:pointer;margin-bottom:7px;text-align:left;font-family:inherit}
+.qopt.ok{border-color:#34d399;background:rgba(52,211,153,.1);color:#34d399}
+.qopt.no{border-color:#f87171;background:rgba(248,113,113,.08);color:#f87171}
+.phbox{background:#13131a;border:1.5px solid #1e1e28;border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:flex-start;gap:8px}
+.phen{font-size:.88rem;font-weight:700;margin-bottom:2px}
+.phru{font-size:.74rem;color:#c084fc}
+.dlg{display:flex;flex-direction:column;gap:8px}
+.dlgmsg{padding:10px 13px;border-radius:13px;font-size:.85rem;line-height:1.6;max-width:88%;position:relative}
+.dlgmsg.a{background:rgba(124,110,240,.15);border:1.5px solid rgba(124,110,240,.25);align-self:flex-end}
+.dlgmsg.b{background:#13131a;border:1.5px solid #1e1e28;align-self:flex-start}
+.dlgrole{font-size:.6rem;font-weight:700;color:#55556a;margin-bottom:2px}
+.addall{width:100%;padding:11px;background:rgba(52,211,153,.12);border:1.5px solid rgba(52,211,153,.25);border-radius:12px;color:#34d399;font-size:.82rem;font-weight:700;cursor:pointer;margin:4px 0 16px}
+.tinp{width:100%;background:#0a0a0c;border:1.5px solid #1e1e28;border-radius:10px;color:#e8e8f0;font-size:.88rem;padding:10px 12px;outline:none;margin-bottom:8px;font-family:inherit}
+.tinp:focus{border-color:#7c6ef0}
+.tchk{padding:9px 18px;background:#7c6ef0;color:#fff;border:none;border-radius:10px;font-size:.82rem;font-weight:700;cursor:pointer;font-family:inherit}
+.secttitle{font-size:.68rem;color:#55556a;font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px}
 </style>
 </head>
 <body>
@@ -286,12 +318,31 @@ select.finp option{background:#13131a}
     </div>
   </div>
 
+
+  <!-- LEARN -->
+  <div class="pg" id="pg-learn">
+    <div id="lhome">
+      <div class="ltabs">
+        <button class="ltab on" id="lt-lessons" onclick="lTab('lessons')">&#128218; Уроки</button>
+        <button class="ltab" id="lt-topics" onclick="lTab('topics')">&#128172; Топики</button>
+        <button class="ltab" id="lt-tasks" onclick="lTab('tasks')">&#9999;&#65039; Задания</button>
+      </div>
+      <div id="ls-lessons"></div>
+      <div id="ls-topics" style="display:none"></div>
+      <div id="ls-tasks" style="display:none"></div>
+    </div>
+    <div id="ldetail" style="display:none">
+      <button class="back-btn" id="lBack">&#8592; Назад</button>
+      <div id="ldetailContent"></div>
+    </div>
+  </div>
 </div>
 <div id="nav">
   <button class="nb on" id="nb-review"><span class="ni">&#128260;</span>Review<span class="nbadge" id="nbadge" style="display:none"></span></button>
   <button class="nb" id="nb-browse"><span class="ni">&#128218;</span>Browse</button>
   <button class="nb" id="nb-stats"><span class="ni">&#128202;</span>Stats</button>
   <button class="nb" id="nb-chat"><span class="ni">&#129302;</span>Chat</button>
+  <button class="nb" id="nb-learn"><span class="ni">&#127891;</span>Learn</button>
 </div>
 
 <div id="toast" style="position:fixed;top:14px;left:50%;transform:translateX(-50%);background:#7c6ef0;color:#fff;padding:9px 20px;border-radius:40px;font-weight:700;font-size:.82rem;box-shadow:0 6px 24px rgba(124,110,240,.5);white-space:nowrap;z-index:999;display:none"></div>
@@ -423,13 +474,14 @@ function updateUI(){
 var curTab="review";
 function goTab(name){
   curTab=name;
-  ["review","browse","stats","chat"].forEach(function(t){
+  ["review","browse","stats","chat","learn"].forEach(function(t){
     document.getElementById("pg-"+t).classList.toggle("on",t===name);
     document.getElementById("nb-"+t).classList.toggle("on",t===name);
   });
   if(name==="browse")rBrowse();
   if(name==="stats")rStats();
   if(name==="review")startRv();
+  if(name==="learn")renderLearn();
 }
 
 document.getElementById("nb-review").addEventListener("click",function(){goTab("review");});
@@ -833,6 +885,276 @@ function speak(text){
   window.speechSynthesis.speak(u);
 }
 if(window.speechSynthesis){window.speechSynthesis.getVoices();window.speechSynthesis.onvoiceschanged=function(){window.speechSynthesis.getVoices();};}
+
+
+// ── LEARN DATA ───────────────────────────────────────────────────────────────
+var LESSONS=[
+  {id:"l1",icon:"&#129504;",title:"Stative Verbs",tag:"Grammar",desc:"Почему нельзя 'I am knowing'",
+   theory:"Stative verbs describe **states**, not actions. They don't go in Continuous tenses.\n\n**Never:** I am knowing, I am having a car, I am loving it.\n**Say:** I know, I have a car, I love it.\n\n**Key stative verbs:** know, believe, think (opinion), see (understand), hear, smell, taste, love, hate, want, need, have (possess), own.",
+   examples:["I know what you mean — that makes total sense.","She believes he's telling the truth.","I think this is a great idea, honestly.","Do you hear that? Someone's outside.","I love how she handles pressure."],
+   quiz:[{q:"Как правильно?",opts:["I am knowing the answer","I know the answer"],c:1},{q:"Выбери правильный:",opts:["She is having a car","She has a car"],c:1},{q:"'I think he's right' значит:",opts:["Я сейчас думаю","Я считаю что он прав"],c:1}]},
+  {id:"l2",icon:"&#9889;",title:"Phrasal Verbs",tag:"Grammar",desc:"Самая разговорная часть английского",
+   theory:"Phrasal verbs = verb + preposition. They sound natural and casual.\n\n**fill out** — заполнить\n**rely on** — полагаться на\n**throw off-track** — выбить из колеи\n**pipe down** — заткнуться\n**slave over** — корпеть над",
+   examples:["Can you fill out this form real quick?","I rely on her for everything work-related.","That question totally threw me off-track.","Will you please pipe down? I'm on a call.","She slaved over that presentation all weekend."],
+   quiz:[{q:"'Fill out' означает:",opts:["Выходить","Заполнять","Падать"],c:1},{q:"'Rely on someone' значит:",opts:["Доверять","Полагаться на","Игнорировать"],c:1},{q:"Правильный вариант:",opts:["Pipe down, please!","Pipe up, please!"],c:0}]},
+  {id:"l3",icon:"&#128197;",title:"Present Perfect vs Past Simple",tag:"Grammar",desc:"Самая частая ошибка — когда что использовать",
+   theory:"**Past Simple** — конкретное время (вчера, в 2020, когда...)\n**Present Perfect** — связь с настоящим, опыт, только что произошло\n\n**Past Simple:** I ate pizza yesterday.\n**Present Perfect:** I've eaten sushi before. She's just called me.\n\n**Слова-маркеры:** just, already, yet, ever, never → Present Perfect",
+   examples:["I've already seen that movie — it's great.","Did you call her yesterday?","She's just left the office.","I never tried Thai food before last week.","Have you ever been to New York?"],
+   quiz:[{q:"'Я вчера видел его' — как?",opts:["I have seen him yesterday","I saw him yesterday"],c:1},{q:"'Я уже поел' — как?",opts:["I've already eaten","I already ate"],c:0},{q:"'Ты был в Лондоне?' — как?",opts:["Did you ever be in London?","Have you ever been to London?"],c:1}]},
+  {id:"l4",icon:"&#128295;",title:"Make vs Do",tag:"Grammar",desc:"Чёткие правила — раз и навсегда",
+   theory:"**DO** — общая деятельность, обязанности:\ndo homework, do the dishes, do exercise, do your best\n\n**MAKE** — создание, результат:\nmake a mistake, make a decision, make money, make a plan\n\n**Trick:** создаёшь что-то — MAKE. Выполняешь — DO.",
+   examples:["I need to do the dishes before she gets home.","She made a really tough decision last week.","Do your best and don't stress about the rest.","He made a ton of money on that deal.","Can you do me a favor real quick?"],
+   quiz:[{q:"'Сделать ошибку' — как?",opts:["Do a mistake","Make a mistake"],c:1},{q:"'Делать домашнее задание':",opts:["Make homework","Do homework"],c:1},{q:"'Принять решение':",opts:["Make a decision","Do a decision"],c:0}]}
+];
+
+var TOPICS=[
+  {id:"t1",icon:"&#9749;",title:"Кофейня",tag:"Daily life",desc:"Заказ, small talk, встреча с другом",
+   phrases:[{en:"Can I get a large oat milk latte to go?",ru:"Большой латте на овсяном молоке навынос, пожалуйста"},{en:"Is this seat taken?",ru:"Это место занято?"},{en:"Can I get the WiFi password?",ru:"Можно пароль от WiFi?"},{en:"I'll have the same as her.",ru:"Мне то же самое что ей."},{en:"Keep the change.",ru:"Сдачи не нужно."},{en:"It's on me!",ru:"Я угощаю!"},{en:"Can we split the bill?",ru:"Можем разделить счёт?"},{en:"Sorry, I didn't catch that.",ru:"Извини, не расслышал."}],
+   dialogue:[{r:"A",t:"Hey! Sorry I'm late — traffic was insane."},{r:"B",t:"No worries, I just got here too. Have you ordered yet?"},{r:"A",t:"Not yet. What are you getting?"},{r:"B",t:"Probably just a flat white. I'm trying to cut back on caffeine."},{r:"A",t:"Same. Can I get a medium flat white and... actually, make it a large."},{r:"B",t:"Ha! So much for cutting back."}]},
+  {id:"t2",icon:"&#128188;",title:"Офис / Работа",tag:"Work",desc:"Митинги, дедлайны, коллеги",
+   phrases:[{en:"Let's circle back on this later.",ru:"Вернёмся к этому позже."},{en:"Can you walk me through it?",ru:"Можешь объяснить по шагам?"},{en:"I'll loop you in.",ru:"Буду держать тебя в курсе."},{en:"Let's take this offline.",ru:"Давай обсудим вне митинга."},{en:"I'm swamped right now.",ru:"Я сейчас завален работой."},{en:"Can we push the deadline?",ru:"Можем сдвинуть дедлайн?"},{en:"Just to clarify...",ru:"Просто уточнить..."},{en:"That's above my pay grade.",ru:"Это не моя компетенция."}],
+   dialogue:[{r:"A",t:"Hey, do you have a minute?"},{r:"B",t:"Yeah, what's up?"},{r:"A",t:"I wanted to loop you in — the client meeting moved to Thursday."},{r:"B",t:"Oh wow. Does that work for everyone?"},{r:"A",t:"I think so. I'm just swamped with the report right now."},{r:"B",t:"I can take that off your plate if you need."},{r:"A",t:"That would actually be amazing. Thank you!"}]},
+  {id:"t3",icon:"&#128155;",title:"Первое свидание",tag:"Social",desc:"Знакомство, флирт, small talk",
+   phrases:[{en:"So what do you do for fun?",ru:"Чем занимаешься в свободное время?"},{en:"I'm a total foodie.",ru:"Я большой любитель еды."},{en:"We should do this again sometime.",ru:"Нам стоит повторить это как-нибудь."},{en:"No way, me too!",ru:"Серьёзно, я тоже!"},{en:"What's your take on it?",ru:"А ты как к этому относишься?"},{en:"You're easy to talk to.",ru:"С тобой легко разговаривать."},{en:"I'm having a really good time.",ru:"Мне очень нравится."}],
+   dialogue:[{r:"A",t:"So, have you been to this place before?"},{r:"B",t:"Once, yeah. The pasta here is insane. Are you a big food person?"},{r:"A",t:"I'm a total foodie, honestly. I'll try anything once."},{r:"B",t:"Same! No way. Okay we're going to get along great."},{r:"A",t:"Ha! What else do you do for fun?"},{r:"B",t:"I hike a lot. And I'm really into photography."},{r:"A",t:"That's so cool. I'm having a really good time, by the way."}]},
+  {id:"t4",icon:"&#9992;&#65039;",title:"Аэропорт",tag:"Travel",desc:"Регистрация, таможня, задержка рейса",
+   phrases:[{en:"I'd like a window seat, please.",ru:"Хотел бы место у окна."},{en:"Is my flight on time?",ru:"Мой рейс вылетает по расписанию?"},{en:"My bag didn't make it.",ru:"Мой багаж не прилетел."},{en:"How long is the delay?",ru:"Насколько задерживается рейс?"},{en:"Do I need to go through customs?",ru:"Мне нужно проходить таможню?"},{en:"Where's the gate for my flight?",ru:"Где выход на мой рейс?"},{en:"Can I bring this carry-on?",ru:"Можно взять это как ручную кладь?"}],
+   dialogue:[{r:"Agent",t:"Good morning! Passport and booking confirmation, please."},{r:"A",t:"Here you go. Is my flight on time?"},{r:"Agent",t:"There's a slight delay — about 40 minutes. Window or aisle seat?"},{r:"A",t:"Window please. And can I bring this bag as carry-on?"},{r:"Agent",t:"Let me check... yes, that's fine. Gate 14."},{r:"A",t:"Thank you! Is there a coffee shop near the gate?"},{r:"Agent",t:"Yes, right past security on the left."}]},
+  {id:"t5",icon:"&#127919;",title:"Собеседование",tag:"Work",desc:"Job interview — говори уверенно",
+   phrases:[{en:"I thrive in fast-paced environments.",ru:"Я хорошо работаю в динамичной среде."},{en:"I'm a quick learner.",ru:"Я быстро учусь."},{en:"I'd love to grow with the company.",ru:"Я хотел бы расти вместе с компанией."},{en:"What does success look like in this role?",ru:"Как выглядит успех на этой позиции?"},{en:"I work well under pressure.",ru:"Я хорошо работаю под давлением."},{en:"I'm excited about this opportunity.",ru:"Меня очень воодушевляет эта возможность."},{en:"Could you tell me more about the team?",ru:"Расскажите больше о команде?"}],
+   dialogue:[{r:"HR",t:"So, tell me a little about yourself."},{r:"A",t:"Sure! I've been in marketing for 5 years, mostly in SaaS. I thrive in fast-paced environments and I'm really passionate about data-driven growth."},{r:"HR",t:"What's your biggest strength?"},{r:"A",t:"I'm a quick learner. I pick up new tools fast and work well under pressure."},{r:"HR",t:"What are you looking for in your next role?"},{r:"A",t:"I'd love to grow with the company long-term. Could you tell me more about how the team is structured?"}]}
+];
+
+var TASKS=[
+  {id:"tk1",icon:"&#9999;&#65039;",title:"Fill in the blank",desc:"Вставь правильное слово",
+   exercises:[
+     {s:"I completely ___ we had plans tonight.",w:"forgot",opts:["forgot","forgave","forward"]},
+     {s:"She has a lot of ___ in herself.",w:"confidence",opts:["confidence","compassion","concern"]},
+     {s:"Don't let one bad day ___ you off-track.",w:"throw",opts:["take","throw","pull"]},
+     {s:"I ___ on her for everything.",w:"rely",opts:["rely","count","depend"]},
+     {s:"You can ___ down — nobody is listening.",w:"pipe",opts:["pipe","calm","settle"]}]},
+  {id:"tk2",icon:"&#128288;",title:"Translate to English",desc:"Переведи на американский английский",
+   exercises:[
+     {ru:"Я полностью забыл о встрече.",en:"I completely forgot about the meeting."},
+     {ru:"Это не проблема, правда.",en:"It's no bother, honestly."},
+     {ru:"Я завален работой прямо сейчас.",en:"I'm swamped right now."},
+     {ru:"С тобой легко разговаривать.",en:"You're easy to talk to."},
+     {ru:"Давай вернёмся к этому позже.",en:"Let's circle back on this later."}]},
+  {id:"tk3",icon:"&#128269;",title:"Spot the error",desc:"Найди ошибку в предложении",
+   exercises:[
+     {wrong:"I am knowing the answer.",correct:"I know the answer.",explain:"'Know' — stative verb, не используется в Continuous"},
+     {wrong:"She did a mistake.",correct:"She made a mistake.",explain:"'Make a mistake' — устойчивое выражение"},
+     {wrong:"I have seen him yesterday.",correct:"I saw him yesterday.",explain:"С 'yesterday' нужен Past Simple"},
+     {wrong:"Can you do a decision?",correct:"Can you make a decision?",explain:"'Make a decision' — не 'do'"},
+     {wrong:"I am having a car.",correct:"I have a car.",explain:"'Have' (владеть) — stative verb"}]}
+];
+
+// ── LEARN LOGIC ──────────────────────────────────────────────────────────────
+document.getElementById("nb-learn").addEventListener("click",function(){goTab("learn");});
+document.getElementById("lBack").addEventListener("click",function(){
+  document.getElementById("lhome").style.display="block";
+  document.getElementById("ldetail").style.display="none";
+});
+
+var curLTab="lessons";
+function lTab(t){
+  curLTab=t;
+  ["lessons","topics","tasks"].forEach(function(x){
+    document.getElementById("ls-"+x).style.display=x===t?"block":"none";
+    document.getElementById("lt-"+x).classList.toggle("on",x===t);
+  });
+}
+
+function renderLearn(){
+  // LESSONS
+  var el=document.getElementById("ls-lessons"); el.innerHTML="";
+  LESSONS.forEach(function(l){
+    var d=document.createElement("div");d.className="lcard";
+    d.innerHTML='<div class="lico">'+l.icon+'</div><div><div class="ltitle">'+esc(l.title)+'</div><div class="ldesc">'+esc(l.desc)+'</div><span class="ltag">'+esc(l.tag)+'</span></div>';
+    (function(lesson){d.addEventListener("click",function(){openLesson(lesson);});})(l);
+    el.appendChild(d);
+  });
+  // TOPICS
+  var et=document.getElementById("ls-topics"); et.innerHTML="";
+  TOPICS.forEach(function(t){
+    var d=document.createElement("div");d.className="lcard";
+    d.innerHTML='<div class="lico">'+t.icon+'</div><div><div class="ltitle">'+esc(t.title)+'</div><div class="ldesc">'+esc(t.desc)+'</div><span class="ltag">'+esc(t.tag)+'</span></div>';
+    (function(topic){d.addEventListener("click",function(){openTopic(topic);});})(t);
+    et.appendChild(d);
+  });
+  // TASKS
+  var tk=document.getElementById("ls-tasks"); tk.innerHTML="";
+  TASKS.forEach(function(t){
+    var d=document.createElement("div");d.className="lcard";
+    d.innerHTML='<div class="lico">'+t.icon+'</div><div><div class="ltitle">'+esc(t.title)+'</div><div class="ldesc">'+esc(t.desc)+'</div></div>';
+    (function(task){d.addEventListener("click",function(){openTask(task);});})(t);
+    tk.appendChild(d);
+  });
+}
+
+function showDetail(html){
+  document.getElementById("lhome").style.display="none";
+  document.getElementById("ldetail").style.display="block";
+  document.getElementById("ldetailContent").innerHTML=html;
+}
+
+function spkBtn(txt){
+  var b=document.createElement("button");b.innerHTML="&#128266;";
+  b.style.cssText="background:none;border:none;color:#55556a;font-size:.8rem;cursor:pointer;padding:0;flex-shrink:0";
+  b.addEventListener("click",function(e){e.stopPropagation();speak(txt);});
+  return b;
+}
+
+function openLesson(l){
+  document.getElementById("lhome").style.display="none";
+  document.getElementById("ldetail").style.display="block";
+  var el=document.getElementById("ldetailContent"); el.innerHTML="";
+
+  el.innerHTML='<div style="font-size:2rem;margin-bottom:6px">'+l.icon+'</div><div style="font-size:1.1rem;font-weight:800;margin-bottom:4px">'+esc(l.title)+'</div><div style="font-size:.8rem;color:#55556a;margin-bottom:14px">'+esc(l.desc)+'</div>';
+
+  var th=document.createElement("div");th.className="theory";
+  th.innerHTML=l.theory.replace(/\n/g,"<br>").replace(/\*\*(.+?)\*\*/g,"<b>$1</b>");
+  el.appendChild(th);
+
+  var st=document.createElement("div");st.className="secttitle";st.textContent="Примеры";el.appendChild(st);
+  var exb=document.createElement("div");exb.className="exbox";
+  l.examples.forEach(function(s){
+    var d=document.createElement("div");d.className="exline";
+    d.appendChild(spkBtn(s));
+    var sp=document.createElement("span");sp.textContent=s;d.appendChild(sp);
+    exb.appendChild(d);
+  });
+  el.appendChild(exb);
+
+  var qt=document.createElement("div");qt.className="secttitle";qt.textContent="Мини-квиз";el.appendChild(qt);
+  l.quiz.forEach(function(q){
+    var box=document.createElement("div");box.className="qbox";
+    var qq=document.createElement("div");qq.className="qquestion";qq.textContent=q.q;box.appendChild(qq);
+    var answered=false;
+    q.opts.forEach(function(opt,oi){
+      var btn=document.createElement("button");btn.className="qopt";btn.textContent=opt;
+      (function(isOk,b,qi){
+        b.addEventListener("click",function(){
+          if(answered)return;answered=true;
+          box.querySelectorAll(".qopt").forEach(function(x){x.disabled=true;});
+          b.classList.add(isOk?"ok":"no");
+          if(!isOk)box.querySelectorAll(".qopt")[q.c].classList.add("ok");
+          if(isOk){gainXP(5);toast("+5 XP \u2713");}
+        });
+      })(oi===q.c,btn,oi);
+      box.appendChild(btn);
+    });
+    el.appendChild(box);
+  });
+}
+
+function openTopic(t){
+  document.getElementById("lhome").style.display="none";
+  document.getElementById("ldetail").style.display="block";
+  var el=document.getElementById("ldetailContent"); el.innerHTML="";
+
+  el.innerHTML='<div style="font-size:2rem;margin-bottom:6px">'+t.icon+'</div><div style="font-size:1.1rem;font-weight:800;margin-bottom:4px">'+esc(t.title)+'</div><div style="font-size:.8rem;color:#55556a;margin-bottom:14px">'+esc(t.desc)+'</div>';
+
+  var st=document.createElement("div");st.className="secttitle";st.textContent="Ключевые фразы";el.appendChild(st);
+  t.phrases.forEach(function(p){
+    var box=document.createElement("div");box.className="phbox";
+    var info=document.createElement("div");info.style.flex="1";
+    info.innerHTML='<div class="phen">'+esc(p.en)+'</div><div class="phru">'+esc(p.ru)+'</div>';
+    box.appendChild(info);box.appendChild(spkBtn(p.en));
+    el.appendChild(box);
+  });
+
+  var ab=document.createElement("button");ab.className="addall";ab.textContent="+ Добавить все фразы в базу";
+  ab.addEventListener("click",function(){
+    var added=0;
+    t.phrases.forEach(function(p){
+      if(!DB[p.en]&&!custom[p.en]){
+        custom[p.en]={ru:p.ru,tag:t.tag,s:[],custom:true};
+        cards[p.en]={key:p.en,step:0,next:td(),str:0,seen:0};
+        added++;
+      }
+    });
+    lss("pl_cust",custom);lss("pl_cards",cards);syncSave();
+    gainXP(added*5);toast("\u2713 Добавлено "+added+" фраз!");
+  });
+  el.appendChild(ab);
+
+  var dt=document.createElement("div");dt.className="secttitle";dt.style.marginTop="8px";dt.textContent="Диалог";el.appendChild(dt);
+  var dlg=document.createElement("div");dlg.className="dlg";
+  t.dialogue.forEach(function(line){
+    var msg=document.createElement("div");msg.className="dlgmsg "+(line.r==="A"?"a":"b");
+    var role=document.createElement("div");role.className="dlgrole";role.textContent=line.r;
+    var txt=document.createElement("div");txt.textContent=line.t;
+    var sb=spkBtn(line.t);sb.style.float="right";sb.style.marginLeft="6px";
+    msg.appendChild(role);msg.appendChild(sb);msg.appendChild(txt);
+    dlg.appendChild(msg);
+  });
+  el.appendChild(dlg);
+}
+
+function openTask(tk){
+  document.getElementById("lhome").style.display="none";
+  document.getElementById("ldetail").style.display="block";
+  var el=document.getElementById("ldetailContent"); el.innerHTML="";
+
+  el.innerHTML='<div style="font-size:2rem;margin-bottom:6px">'+tk.icon+'</div><div style="font-size:1.1rem;font-weight:800;margin-bottom:4px">'+esc(tk.title)+'</div><div style="font-size:.8rem;color:#55556a;margin-bottom:14px">'+esc(tk.desc)+'</div>';
+
+  tk.exercises.forEach(function(ex){
+    var box=document.createElement("div");box.className="qbox";box.style.marginBottom="12px";
+
+    if(tk.id==="tk1"){
+      var q=document.createElement("div");q.className="qquestion";
+      q.innerHTML=esc(ex.s).replace("___",'<span style="border-bottom:2px solid #7c6ef0;padding:0 20px;color:#7c6ef0">___</span>');
+      box.appendChild(q);
+      var answered=false;
+      ex.opts.forEach(function(opt){
+        var btn=document.createElement("button");btn.className="qopt";btn.textContent=opt;
+        var isOk=opt===ex.w;
+        (function(b,ok){b.addEventListener("click",function(){
+          if(answered)return;answered=true;
+          box.querySelectorAll(".qopt").forEach(function(x){x.disabled=true;});
+          b.classList.add(ok?"ok":"no");
+          if(!ok)box.querySelectorAll(".qopt").forEach(function(x){if(x.textContent===ex.w)x.classList.add("ok");});
+          if(ok){gainXP(5);toast("+5 XP \u2713");}
+        });})(btn,isOk);
+        box.appendChild(btn);
+      });
+
+    } else if(tk.id==="tk2"){
+      var q=document.createElement("div");q.className="qquestion";q.textContent=ex.ru;box.appendChild(q);
+      var inp=document.createElement("input");inp.className="tinp";inp.placeholder="Напиши по-английски...";
+      var cb=document.createElement("button");cb.className="tchk";cb.textContent="Проверить";
+      var fb=document.createElement("div");fb.style.marginTop="8px";
+      var answered=false;
+      (function(input,correct,feedback,checkbtn){
+        checkbtn.addEventListener("click",function(){
+          if(answered)return;answered=true;
+          var v=input.value.trim().toLowerCase();
+          var ok=v===correct.toLowerCase()||(v.length>4&&correct.toLowerCase().indexOf(v)!==-1);
+          input.style.borderColor=ok?"#34d399":"#f87171";
+          feedback.innerHTML=ok?'<span style="color:#34d399;font-size:.82rem">\u2713 Верно!</span>':'<span style="color:#f87171;font-size:.82rem">Правильно: <em>'+esc(correct)+'</em></span>';
+          if(ok){gainXP(5);toast("+5 XP \u2713");}
+        });
+        input.addEventListener("keydown",function(e){if(e.key==="Enter")checkbtn.click();});
+      })(inp,ex.en,fb,cb);
+      box.appendChild(inp);box.appendChild(cb);box.appendChild(fb);
+
+    } else if(tk.id==="tk3"){
+      var q=document.createElement("div");q.className="qquestion";q.textContent="Что не так?";box.appendChild(q);
+      var wr=document.createElement("div");wr.style.cssText="font-size:.9rem;color:#f87171;padding:8px 12px;background:rgba(248,113,113,.08);border-radius:8px;margin-bottom:10px";wr.textContent=ex.wrong;box.appendChild(wr);
+      var answered=false;
+      var sb=document.createElement("button");sb.className="qopt";sb.textContent="Показать ответ";
+      (function(btn,e){btn.addEventListener("click",function(){
+        if(answered)return;answered=true;btn.style.display="none";
+        var ans=document.createElement("div");
+        ans.innerHTML='<div style="font-size:.85rem;color:#34d399;margin-bottom:5px">\u2713 '+esc(e.correct)+'</div><div style="font-size:.76rem;color:#55556a">'+esc(e.explain)+'</div>';
+        box.appendChild(ans);gainXP(3);toast("+3 XP");
+      });})(sb,ex);
+      box.appendChild(sb);
+    }
+    el.appendChild(box);
+  });
+}
 
 </script>
 </body>
