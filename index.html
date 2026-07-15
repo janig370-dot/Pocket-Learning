@@ -783,10 +783,10 @@ async function doSend(){
   showTyping();
   var sys="You are a friendly American English tutor for a Russian speaker. When the user writes in Russian, respond in Russian. Be concise and practical. Show 2-3 natural American examples when explaining phrases. Use **bold** for key terms.";
   try{
-    var res=await fetch("https://api.anthropic.com/v1/messages",{
+    var res=await fetch("/api/chat",{
       method:"POST",
-      headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-ipc":"true"},
-      body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:600,system:sys,messages:chatHist})
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({messages:chatHist,system:sys,apiKey:apiKey})
     });
     var data=await res.json();
     if(data.error)throw new Error(data.error.message);
