@@ -85,7 +85,7 @@ button,input,textarea,select{font-family:inherit}
 .pchip-tag{font-size:.6rem;font-weight:700}
 .del-btn{position:absolute;top:-4px;right:-4px;width:18px;height:18px;background:#f87171;border:none;border-radius:50%;color:#fff;font-size:.75rem;cursor:pointer;line-height:18px;text-align:center;font-weight:700}
 
-.back-btn{background:none;border:none;color:#55556a;font-size:.84rem;cursor:pointer;margin-bottom:14px;padding:0;display:flex;align-items:center;gap:4px}
+.back-btn{background:#13131a;border:1.5px solid #2a2a38;border-radius:10px;color:#e8e8f0;font-size:.85rem;font-weight:600;cursor:pointer;margin-bottom:16px;padding:9px 16px;display:inline-flex;align-items:center;gap:6px}
 .det-card{background:#13131a;border:1.5px solid #1e1e28;border-radius:18px;padding:20px 18px;margin-bottom:10px}
 .det-phrase{font-size:1.4rem;font-weight:800;margin-bottom:4px}
 .det-ru{font-size:.98rem;color:#c084fc;font-weight:600;margin-bottom:14px}
@@ -542,7 +542,8 @@ var rvQ=[],rvI=0,rvC=0,rvT=0,rvDone=false;
 function startRv(){
   allp=ap();
   var d=Object.values(cards).filter(function(c){return due(c)&&allp[c.key];}).map(function(c){return c.key;});
-  rvQ=d.sort(function(){return Math.random()-.5;});
+  rvQ=d.sort(function(){return Math.random()-.5;}).slice(0,10);
+  rvQueue=rvQ.slice(); // keep full copy for post-quiz
   rvI=0;rvC=0;rvT=0;rvDone=false;
   document.getElementById("p1").textContent=Object.values(cards).filter(function(c){return c.seen>0;}).length;
   document.getElementById("p2").textContent=Object.values(cards).filter(function(c){return c.step>=5;}).length;
@@ -682,7 +683,73 @@ function endRv(){
   document.getElementById("dC").textContent=rvC;
   document.getElementById("dW").textContent=rvT-rvC;
   document.getElementById("dT").textContent=rvT;
+  // build post-session quiz if good score
+  if(pct>=50 && rvQueue.length>0){
+    buildPostQuiz();
+  } else {
+    rvShow("done");
+  }
+}
+
+var rvQueue=[];
+function buildPostQuiz(){
+  var ap2=ap();
+  // pick up to 5 phrases from this session that have examples
+  var pool=rvQ.filter(function(k){return ap2[k]&&(ap2[k].s||[]).length>0;}).slice(0,5);
+  if(!pool.length){rvShow("done");return;}
+  var doneEl=document.getElementById("rv-done");
+  doneEl.innerHTML='<div class="state-ico">❓</div><div class="state-ttl">Бонус: вставь слово!</div><div class="state-sub" style="margin-bottom:16px">Выбери правильное слово в предложении</div><div id="pqList"></div><button id="pqFinish" style="display:none;width:100%;padding:13px;background:linear-gradient(135deg,#7c6ef0,#c084fc);color:#fff;border:none;border-radius:14px;font-size:.92rem;font-weight:700;cursor:pointer;margin-top:12px">Продолжить</button>';
   rvShow("done");
+  var list=document.getElementById("pqList");
+  var pqDone=0,pqXP=0;
+  pool.forEach(function(key){
+    var p=ap2[key];
+    // pick a sentence
+    var sent=p.s[Math.floor(Math.random()*p.s.length)];
+    // make gapped sentence - replace key with ___
+    var gapped=sent.replace(new RegExp(key.replace(/[.*+?^${}()|[\]\]/g,"\$&"),"i"),"___");
+    if(gapped===sent) return; // can't gap, skip
+    // make 3 options: correct + 2 others
+    var allK=Object.keys(ap2);
+    var others=allK.filter(function(k){return k!==key;}).sort(function(){return Math.random()-.5;}).slice(0,2);
+    var opts=[key,others[0]||"allow",others[1]||"lack of"].sort(function(){return Math.random()-.5;});
+    var box=document.createElement("div");
+    box.style.cssText="background:#13131a;border:1.5px solid #1e1e28;border-radius:12px;padding:13px;margin-bottom:10px";
+    var q=document.createElement("div");
+    q.style.cssText="font-size:.88rem;line-height:1.7;margin-bottom:10px;color:#c8c8d8";
+    q.innerHTML=esc(gapped).replace("___",'<span style="border-bottom:2px solid #7c6ef0;padding:0 18px;color:#7c6ef0">___</span>');
+    box.appendChild(q);
+    var answered=false;
+    var btnWrap=document.createElement("div");btnWrap.style.cssText="display:flex;flex-direction:column;gap:6px";
+    opts.forEach(function(opt){
+      var btn=document.createElement("button");
+      btn.style.cssText="padding:9px 13px;background:#0a0a0c;border:1.5px solid #1e1e28;border-radius:9px;color:#e8e8f0;font-size:.84rem;cursor:pointer;text-align:left;font-family:inherit";
+      btn.textContent=opt;
+      var isOk=opt===key;
+      (function(b,ok){b.addEventListener("click",function(){
+        if(answered)return;answered=true;
+        btnWrap.querySelectorAll("button").forEach(function(x){x.disabled=true;});
+        b.style.background=ok?"rgba(52,211,153,.12)":"rgba(248,113,113,.08)";
+        b.style.borderColor=ok?"#34d399":"#f87171";
+        b.style.color=ok?"#34d399":"#f87171";
+        if(!ok) btnWrap.querySelectorAll("button").forEach(function(x){if(x.textContent===key){x.style.background="rgba(52,211,153,.12)";x.style.borderColor="#34d399";x.style.color="#34d399";}});
+        if(ok){pqXP+=8;gainXP(8);toast("+8 XP ✓");}
+        pqDone++;
+        if(pqDone>=pool.length){
+          var fin=document.getElementById("pqFinish");
+          fin.textContent="✓ Готово! +" +pqXP+" XP";
+          fin.style.display="block";
+          fin.addEventListener("click",function(){
+            doneEl.innerHTML='<div class="state-ico">🔥</div><div class="state-ttl">Отлично!</div><div class="state-sub">Сессия завершена</div><div class="pills"><div class="pill"><div class="pill-v" id="dC" style="color:#34d399">'+rvC+'</div><div class="pill-l">Верно</div></div><div class="pill"><div class="pill-v" id="dW" style="color:#f87171">'+(rvT-rvC)+'</div><div class="pill-l">Ошибок</div></div></div><button class="big-btn" id="rvAgain">Ещё раз</button>';
+            document.getElementById("rvAgain").addEventListener("click",startRv);
+          });
+        }
+      });})(btn,isOk);
+      btnWrap.appendChild(btn);
+    });
+    box.appendChild(btnWrap);
+    list.appendChild(box);
+  });
 }
 
 // ── BROWSE ───────────────────────────────────────────────────────────────
@@ -1023,13 +1090,14 @@ var TASKS=[
      {s:"Don't let one bad day ___ you off-track.",w:"throw",ru:"Не позволяй одному плохому дню выбить тебя из колеи.",opts:["take","throw","pull"]},
      {s:"I ___ on her for everything.",w:"rely",ru:"Я полагаюсь на неё во всём.",opts:["rely","count","depend"]},
      {s:"You can ___ down — nobody is listening.",w:"pipe",ru:"Можешь заткнуться — всё равно никто не слушает.",opts:["pipe","calm","settle"]}]},
-  {id:"tk2",icon:"&#128288;",title:"Translate to English",desc:"Переведи на американский английский",
+  {id:"tk2",icon:"&#128288;",title:"Translate to English",desc:"Переведи — AI оценит уровень лексики",
+   topic:"Work & Social situations",
    exercises:[
-     {ru:"Я полностью забыл о встрече.",en:"I completely forgot about the meeting."},
-     {ru:"Это не проблема, правда.",en:"It's no bother, honestly."},
-     {ru:"Я завален работой прямо сейчас.",en:"I'm swamped right now."},
-     {ru:"С тобой легко разговаривать.",en:"You're easy to talk to."},
-     {ru:"Давай вернёмся к этому позже.",en:"Let's circle back on this later."}]},
+     {ru:"Я полностью забыл о встрече.",en:"I completely forgot about the meeting.",context:"Work email"},
+     {ru:"Это не проблема, правда.",en:"It's no bother, honestly.",context:"Casual conversation"},
+     {ru:"Я завален работой прямо сейчас.",en:"I'm swamped right now.",context:"Office chat"},
+     {ru:"С тобой легко разговаривать.",en:"You're easy to talk to.",context:"First date"},
+     {ru:"Давай вернёмся к этому позже.",en:"Let's circle back on this later.",context:"Work meeting"}]},
   {id:"tk3",icon:"&#128269;",title:"Spot the error",desc:"Найди ошибку в предложении",
    exercises:[
      {wrong:"I am knowing the answer.",correct:"I know the answer.",explain:"'Know' — stative verb, не используется в Continuous"},
@@ -1378,7 +1446,7 @@ function openTask(tk){
           }
 
           try{
-            var evalPrompt='The student was asked to translate this Russian phrase into English:\nRussian: "'+e2.ru+'"\nCorrect answer: "'+correct+'"\nStudent answer: "'+val+'"\n\nEvaluate the student answer on 3 levels:\n- Level 3 (Advanced, +10 XP): correct meaning, natural American English, good vocabulary\n- Level 2 (Good, +5 XP): correct meaning, acceptable English, simple vocabulary\n- Level 1 (Basic, +3 XP): mostly correct meaning but awkward or very simple\n- Level 0 (Wrong, +0 XP): wrong meaning or incomprehensible\n\nRespond ONLY with JSON: {"level":0-3,"feedback":"short comment in Russian","xp":0/3/5/10}';
+            var evalPrompt='Evaluate this English translation.\nContext: '+(e2.context||'general')+'.\nRussian: "'+e2.ru+'"\nModel answer: "'+correct+'"\nStudent wrote: "'+val+'"\n\nRate on 3 levels:\n- Level 3 (+10 XP): correct meaning, natural American English, fits context\n- Level 2 (+5 XP): correct meaning but simple vocabulary\n- Level 1 (+3 XP): mostly right but awkward or too literal\n- Level 0 (+0 XP): wrong or incomprehensible\n\nRespond ONLY with JSON: {"level":0,"feedback":"comment in Russian max 10 words","xp":0}';
             var res=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},
               body:JSON.stringify({messages:[{role:"user",content:evalPrompt}],system:"You evaluate English translations. Return only valid JSON.",apiKey:apiKey})});
             var data=await res.json();
