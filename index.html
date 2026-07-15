@@ -244,6 +244,9 @@ select.finp option{background:#13131a}
 
   <!-- STATS -->
   <div class="pg" id="pg-stats">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+      <button onclick="syncLoad().then(function(){updateUI();rStats();toast('✓ Синхронизировано');})" style="padding:7px 14px;background:rgba(124,110,240,.15);border:1.5px solid rgba(124,110,240,.3);border-radius:20px;color:#7c6ef0;font-size:.72rem;font-weight:700;cursor:pointer">⟳ Синхронизировать</button>
+    </div>
     <div class="sgrid" id="sgrid"></div>
     <div style="font-size:.8rem;font-weight:700;margin-bottom:10px">Уровни</div>
     <div class="lvmap" id="lvmap"></div>
@@ -401,6 +404,7 @@ function gainXP(n){
   var ol=glv(xp).n; xp+=n; lss("pl_xp",xp);
   if(glv(xp).n!==ol)setTimeout(function(){toast("🎉 Level up! "+glv(xp).i+" "+glv(xp).n);},300);
   updateUI();
+  syncSave();
 }
 
 function updateUI(){
@@ -472,6 +476,16 @@ function rvCard(){
   var tg=document.getElementById("rvTag");
   tg.textContent=p.tag||"General";tg.style.color=tc;tg.style.background=tc+"18";
   document.getElementById("rvPhrase").textContent=key;
+  // add speak button
+  var existing = document.getElementById("rvSpeakBtn");
+  if(existing) existing.remove();
+  var spk = document.createElement("button");
+  spk.id = "rvSpeakBtn";
+  spk.textContent = "🔊";
+  spk.title = "Произнести";
+  spk.style.cssText = "background:none;border:1.5px solid #1e1e28;border-radius:20px;color:#55556a;font-size:.85rem;padding:4px 10px;cursor:pointer;margin-top:6px";
+  (function(k){ spk.addEventListener("click", function(){ speak(k); }); })(key);
+  document.getElementById("rvPhrase").after(spk);
   document.getElementById("rvMeta").textContent=c.seen>0?"Повторений: "+c.seen+" · Интервал: "+IVLS[c.step]+"д":"Первый раз";
   document.getElementById("rvAns").style.display="none";
   document.getElementById("rvShowWrap").style.display="block";
@@ -484,8 +498,16 @@ document.getElementById("rvShowBtn").addEventListener("click",function(){
   var ex=document.getElementById("rvEx");
   ex.innerHTML="";
   (p.s||[]).forEach(function(s){
+    var wrap=document.createElement("div");
     var d=document.createElement("div");
-    d.className="rv-ex";d.innerHTML=bold(s,key);ex.appendChild(d);
+    d.className="rv-ex";d.innerHTML=bold(s,key);
+    var spk=document.createElement("button");
+    spk.textContent="🔊";
+    spk.style.cssText="background:none;border:none;color:#55556a;font-size:.82rem;cursor:pointer;padding:0 0 6px 2px;float:right";
+    (function(txt){ spk.addEventListener("click",function(e){ e.stopPropagation(); speak(txt); }); })(s);
+    d.prepend(spk);
+    wrap.appendChild(d);
+    ex.appendChild(wrap);
   });
   document.getElementById("rvAns").style.display="block";
   document.getElementById("rvShowWrap").style.display="none";
@@ -518,6 +540,7 @@ function doRate(q){
   var iv=IVLS[ns];
   cards[key]={key:key,step:ns,next:iv===0?td():addD(td(),iv),str:q>=2?c.str+1:0,seen:c.seen+1};
   lss("pl_cards",cards);
+  syncSave();
   var ok=q>=2;if(ok)rvC++;rvT++;
   gainXP(ok?10:2);toast(ok?"+10 XP ✓":"+2 XP");
   setTimeout(function(){
@@ -665,12 +688,26 @@ function openDet(key){
   tagEl.textContent=p.tag||"General";tagEl.style.color=tc;tagEl.style.background=tc+"18";
   card.appendChild(tagEl);
 
-  var ph=document.createElement("div");ph.className="det-phrase";ph.textContent=key;card.appendChild(ph);
+  var ph=document.createElement("div");ph.className="det-phrase";
+  ph.style.display="flex";ph.style.alignItems="center";ph.style.gap="10px";
+  var phTxt=document.createElement("span");phTxt.textContent=key;ph.appendChild(phTxt);
+  var phSpk=document.createElement("button");
+  phSpk.textContent="🔊";
+  phSpk.style.cssText="background:none;border:1.5px solid #1e1e28;border-radius:20px;color:#55556a;font-size:.85rem;padding:4px 10px;cursor:pointer;flex-shrink:0";
+  (function(k){ phSpk.addEventListener("click",function(){ speak(k); }); })(key);
+  ph.appendChild(phSpk);
+  card.appendChild(ph);
   var ru=document.createElement("div");ru.className="det-ru";ru.textContent=p.ru;card.appendChild(ru);
 
   var lbl=document.createElement("div");lbl.className="rv-exlbl";lbl.style.marginTop="0";lbl.textContent="Примеры в контексте";card.appendChild(lbl);
   (p.s||[]).forEach(function(s){
-    var d=document.createElement("div");d.className="det-ex";d.innerHTML=bold(s,key);card.appendChild(d);
+    var d=document.createElement("div");d.className="det-ex";d.innerHTML=bold(s,key);
+    var spk=document.createElement("button");
+    spk.textContent="🔊";
+    spk.style.cssText="background:none;border:none;color:#55556a;font-size:.82rem;cursor:pointer;padding:0 0 4px 2px;float:right";
+    (function(txt){ spk.addEventListener("click",function(e){ e.stopPropagation(); speak(txt); }); })(s);
+    d.prepend(spk);
+    card.appendChild(d);
   });
 
   document.getElementById("detSRS").innerHTML=
@@ -799,6 +836,73 @@ async function doSend(){
     hideTyping();addMsg("a","<span style='color:#f87171'>Ошибка: "+esc(String(e))+"</span>");
   }
   chatBusy=false;document.getElementById("sendBtn").disabled=false;
+}
+
+// ── SUPABASE SYNC ────────────────────────────────────────────────────────────
+var SB_URL = "https://xffrdbtrhfmxtnpfwktv.supabase.co";
+var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhmZnJkYnRyaGZteHRucGZ3a3R2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxNDE2ODEsImV4cCI6MjA5OTcxNzY4MX0.5W4qQhtEuOZmZcz1qJHwzElZKgXVsPCkBYjRiYeYdvE";
+var USER_ID = (function(){
+  var id = localStorage.getItem('pl_uid');
+  if(!id){ id = 'user_' + Math.random().toString(36).slice(2,10); localStorage.setItem('pl_uid',id); }
+  return id;
+})();
+
+async function syncSave(){
+  try{
+    var data = {
+      cards: cards, custom: custom, xp: xp,
+      streak: streak, ldate: ldate
+    };
+    await fetch(SB_URL+'/rest/v1/progress', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SB_KEY,
+        'Authorization': 'Bearer '+SB_KEY,
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify({user_id: USER_ID, data: data})
+    });
+  } catch(e){ console.log('sync save error', e); }
+}
+
+async function syncLoad(){
+  try{
+    var res = await fetch(SB_URL+'/rest/v1/progress?user_id=eq.'+USER_ID+'&select=data', {
+      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer '+SB_KEY }
+    });
+    var rows = await res.json();
+    if(rows && rows.length && rows[0].data){
+      var d = rows[0].data;
+      if(d.cards)  { cards  = d.cards;  lss('pl_cards', cards);  }
+      if(d.custom) { custom = d.custom; lss('pl_cust',  custom); }
+      if(d.xp)     { xp     = d.xp;     lss('pl_xp',   xp);     }
+      if(d.streak) { streak = d.streak; lss('pl_str',  streak);  }
+      if(d.ldate)  { ldate  = d.ldate;  lss('pl_date', ldate);   }
+      // reinit missing cards
+      var allp2 = ap();
+      Object.keys(allp2).forEach(function(k){ if(!cards[k]) cards[k]={key:k,step:0,next:td(),str:0,seen:0}; });
+      lss('pl_cards', cards);
+      return true;
+    }
+  } catch(e){ console.log('sync load error', e); }
+  return false;
+}
+
+// ── SPEECH ───────────────────────────────────────────────────────────────────
+function speak(text){
+  if(!window.speechSynthesis){toast("Произношение не поддерживается");return;}
+  window.speechSynthesis.cancel();
+  var u=new SpeechSynthesisUtterance(text);
+  u.lang="en-US";u.rate=0.9;u.pitch=1;
+  var voices=window.speechSynthesis.getVoices();
+  var am=voices.find(function(v){return v.lang==="en-US";});
+  if(am)u.voice=am;
+  window.speechSynthesis.speak(u);
+}
+// voices load async on some browsers
+if(window.speechSynthesis){
+  window.speechSynthesis.onvoiceschanged=function(){};
 }
 
 // ── INIT ─────────────────────────────────────────────────────────────────
